@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Подарки — вишлисты</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --text: #e6ecf7;
+      --muted: #8d92a2;
+      --accent: #5f9bff;
+      --accent2: #7df5c6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1a2032 0%, #0f1115 40%, #0f1115 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 4px;
+      gap: 12px;
+    }
+    .logo { display:flex;gap:10px;align-items:center; }
+    .logoBadge {
+      width: 40px;height:40px;border-radius:16px;
+      background: linear-gradient(160deg, #5f9bff, #7df5c6);
+      display:grid;place-items:center;font-weight:700;font-size:18px;color:#0f1115;
+      box-shadow:0 8px 30px rgba(95,155,255,0.35);
+    }
+    h1 { font-size: 17px; margin:0; }
+    .muted { color:var(--muted); font-size:12px; }
+    .tabs { display:flex;gap:8px;padding:10px 18px 0; }
+    .tab {
+      padding:6px 12px;border-radius:999px;background:rgba(255,255,255,0.02);
+      border:1px solid transparent;color:var(--muted);font-size:13px;cursor:pointer;
+    }
+    .tab.active { background:rgba(95,155,255,0.12);border-color:rgba(95,155,255,0.35);color:var(--text); }
+    main { padding:14px 18px 80px; }
+    .top-row { display:flex;justify-content:space-between;align-items:center;margin-bottom:12px; }
+    .btn {
+      background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.03);
+      border-radius: 14px; color:var(--text); padding:6px 10px; font-size:12px; cursor:pointer;
+      display:inline-flex;gap:6px;align-items:center;
+    }
+    .btn.primary { background:linear-gradient(160deg, #5f9bff, #346fe2); border:none; }
+    .btn.ghost { background:transparent; border:1px solid rgba(255,255,255,0.12); }
+    .list-card {
+      background: radial-gradient(circle at top, rgba(95,155,255,0.12), rgba(12,16,23,0.2));
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(12px);
+    }
+    .list-left { display:flex;gap:10px;align-items:flex-start; }
+    .list-icon {
+      width:38px;height:38px;border-radius:14px;background:rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.03);display:grid;place-items:center;font-size:20px;cursor:pointer;
+    }
+    .list-card-title { font-weight:600;font-size:14px;margin-bottom:3px; }
+    .pill-inline { color:var(--muted);font-size:11px;margin-top:3px; }
+    .progressbar { height:6px;background:rgba(230,236,247,0.03);border-radius:999px;overflow:hidden;margin-top:6px;width:140px; }
+    .progressbar i { height:100%;background:linear-gradient(90deg, #5f9bff, #7df5c6);display:block;width:0; }
+    .empty { padding:22px 12px;text-align:center;color:var(--muted);font-size:13px; }
+    .wish-card { background:rgba(15,17,23,0.45);border:1px solid rgba(255,255,255,0.02);border-radius:16px;padding:12px;margin-bottom:12px; }
+    .wish-card h3 { margin:0 0 4px;font-size:13px;font-weight:600; }
+    .wish-footer { margin-top:8px;display:flex;gap:8px;flex-wrap:wrap; }
+    .pill { background:rgba(254,254,254,0.03);border:1px solid rgba(254,254,254,0.05);border-radius:999px;padding:3px 10px;font-size:11px;color:var(--muted);display:inline-block; }
+    dialog {
+      border:1px solid rgba(255,255,255,0.06);
+      background:#13161e;
+      border-radius:16px;
+      width:92vw;
+      max-width:420px;
+      color:var(--text);
+    }
+    dialog::backdrop { background:rgba(0,0,0,0.45); }
+    .dlg-body { padding:14px 14px 16px; }
+    label { font-size:12px;color:var(--muted);display:block;margin-bottom:4px; }
+    input, select {
+      width:100%;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.03);
+      border-radius:12px;padding:8px 10px;color:var(--text);margin-bottom:8px;
+    }
+    .emoji-grid { display:flex;flex-wrap:wrap;gap:6px; }
+    .emoji-btn { width:36px;height:36px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);display:grid;place-items:center;font-size:18px;cursor:pointer; }
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <div class="logoBadge">★</div>
+      <div>
+        <h1>Подарки</h1>
+        <div class="muted" id="userLine">загрузка…</div>
+      </div>
+    </div>
+    <button class="btn" id="shareMyLists">Поделиться</button>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="mine">Мои</div>
+    <div class="tab" data-tab="friends">Друзья</div>
+    <div class="tab" data-tab="shared">Совместные</div>
+  </div>
+
+  <main>
+    <div id="screen-mine">
+      <div class="top-row">
+        <span class="pill">Мои вишлисты</span>
+        <button class="btn primary" id="btnNewList">+ список</button>
+      </div>
+      <div id="mineLists"></div>
+    </div>
+
+    <div id="screen-friends" style="display:none;">
+      <div class="top-row">
+        <span class="pill">Вишлисты друзей</span>
+        <button class="btn" id="btnInviteFriend">Попросить</button>
+      </div>
+      <div id="friendsLists" class="empty">Пока нет друзей в приложении</div>
+    </div>
+
+    <div id="screen-shared" style="display:none;">
+      <div class="top-row">
+        <span class="pill">Совместные</span>
+        <button class="btn" id="btnNewShared">+ совместный</button>
+      </div>
+      <div id="sharedLists" class="empty">Пока нет совместных списков</div>
+    </div>
+
+    <div id="screen-wishes" style="display:none;">
+      <div class="top-row">
+        <button class="btn" id="backToLists">← Назад</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="btnListSettings">⋯</button>
+          <button class="btn primary" id="btnNewWish">+ желание</button>
+        </div>
+      </div>
+      <div id="wishTitle" class="pill" style="margin-bottom:10px;"></div>
+      <div id="wishList"></div>
+    </div>
+  </main>
+
+  <!-- диалог: новый список -->
+  <dialog id="dlgList">
+    <div class="dlg-body">
+      <h3>Новый список</h3>
+      <label>Название</label>
+      <input id="listName" placeholder="Например: День рождения" />
+      <label>Иконка</label>
+      <input id="listIcon" placeholder="🎁" value="🎁" />
+      <label>Тип</label>
+      <select id="listMode">
+        <option value="personal">Обычный</option>
+        <option value="shared">Совместный</option>
+      </select>
+      <div style="text-align:right;margin-top:4px;">
+        <button class="btn" onclick="dlgList.close()">Отмена</button>
+        <button class="btn primary" id="saveList">Сохранить</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- диалог: новое желание -->
+  <dialog id="dlgWish">
+    <div class="dlg-body">
+      <h3>Новое желание</h3>
+      <label>Название</label>
+      <input id="wishName" placeholder="Например: Гитара" />
+      <label>Ссылка</label>
+      <input id="wishUrl" placeholder="https://..." />
+      <label>Цена (₽)</label>
+      <input id="wishPrice" type="number" min="0" value="0" />
+      <div style="text-align:right;margin-top:4px;">
+        <button class="btn" onclick="dlgWish.close()">Отмена</button>
+        <button class="btn primary" id="saveWish">Сохранить</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- диалог: донат -->
+  <dialog id="dlgDonate">
+    <div class="dlg-body">
+      <h3>Задонатить</h3>
+      <div id="donateWishName" class="muted" style="margin-bottom:6px;"></div>
+      <label>Сумма (₽)</label>
+      <input id="donateAmount" type="number" min="50" value="500" />
+      <div style="text-align:right;margin-top:4px;">
+        <button class="btn" onclick="dlgDonate.close()">Отмена</button>
+        <button class="btn primary" id="confirmDonate">Отправить</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- диалог: выбор иконки -->
+  <dialog id="dlgIcons">
+    <div class="dlg-body">
+      <h3>Выбери иконку</h3>
+      <div class="emoji-grid" id="emojiGrid"></div>
+      <div style="text-align:right;margin-top:8px;">
+        <button class="btn" onclick="dlgIcons.close()">Закрыть</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- диалог: настройки списка -->
+  <dialog id="dlgSettings">
+    <div class="dlg-body">
+      <h3>Настройки списка</h3>
+      <label>Видимость</label>
+      <select id="setVisibility">
+        <option value="public">Для всех</option>
+        <option value="contacts">Для контактов</option>
+        <option value="private">Только я</option>
+        <option value="custom">Выбрать вручную</option>
+      </select>
+
+      <label style="margin-top:8px;">Показывать кто подарил</label>
+      <select id="setShowDonors">
+        <option value="true">Да</option>
+        <option value="false">Нет</option>
+      </select>
+
+      <label style="margin-top:8px;">Монетизация</label>
+      <select id="setPaymentProvider">
+        <option value="">— не подключено —</option>
+        <option value="cloudtips">CloudTips</option>
+      </select>
+
+      <label>CloudTips ссылка / ID</label>
+      <input id="setPaymentPayload" placeholder="https://pay.cloudtips.ru/p/..." />
+
+      <div style="text-align:right;margin-top:10px;">
+        <button class="btn" onclick="dlgSettings.close()">Отмена</button>
+        <button class="btn primary" id="saveSettings">Сохранить</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    const API_BASE = "https://YOUR-REPLIT-URL.repl.co"; // ← вставь свой бэк
+    const tg = window.Telegram?.WebApp;
+    tg && tg.ready && tg.ready();
+
+    let currentUser = tg?.initDataUnsafe?.user || null;
+    let currentTab = "mine";
+    let myLists = [];
+    let currentList = null;
+    let currentListWishes = [];
+    let donateTarget = null;
+    let iconTargetListId = null;
+
+    const userLine = document.getElementById("userLine");
+    if (currentUser) {
+      userLine.textContent = currentUser.first_name + (currentUser.username ? " (@" + currentUser.username + ")" : "");
+    } else userLine.textContent = "гость";
+
+    const mineListsEl = document.getElementById("mineLists");
+    const screenMine = document.getElementById("screen-mine");
+    const screenFriends = document.getElementById("screen-friends");
+    const screenShared = document.getElementById("screen-shared");
+    const screenWishes = document.getElementById("screen-wishes");
+    const wishListEl = document.getElementById("wishList");
+    const wishTitleEl = document.getElementById("wishTitle");
+    const dlgList = document.getElementById("dlgList");
+    const dlgWish = document.getElementById("dlgWish");
+    const dlgDonate = document.getElementById("dlgDonate");
+    const dlgIcons = document.getElementById("dlgIcons");
+    const dlgSettings = document.getElementById("dlgSettings");
+    const emojiGrid = document.getElementById("emojiGrid");
+
+    const setVisibility = document.getElementById("setVisibility");
+    const setShowDonors = document.getElementById("setShowDonors");
+    const setPaymentProvider = document.getElementById("setPaymentProvider");
+    const setPaymentPayload = document.getElementById("setPaymentPayload");
+
+    // tabs
+    document.querySelectorAll(".tab").forEach(t => {
+      t.onclick = () => {
+        document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+        t.classList.add("active");
+        currentTab = t.dataset.tab;
+        showTab(currentTab);
+      };
+    });
+
+    function showTab(tab) {
+      screenMine.style.display = tab === "mine" ? "block" : "none";
+      screenFriends.style.display = tab === "friends" ? "block" : "none";
+      screenShared.style.display = tab === "shared" ? "block" : "none";
+      screenWishes.style.display = "none";
+    }
+
+    async function ensureUser() {
+      if (!currentUser) return;
+      await fetch(API_BASE + "/api/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tg_id: currentUser.id,
+          username: currentUser.username,
+          full_name: currentUser.first_name,
+          visibility: "public"
+        })
+      });
+    }
+
+    async function loadMyLists() {
+      if (!currentUser) return;
+      const res = await fetch(API_BASE + "/api/lists/" + currentUser.id);
+      const data = await res.json();
+      myLists = data.lists || [];
+      for (const lst of myLists) {
+        const wres = await fetch(API_BASE + "/api/list/" + lst.id + "/wishes");
+        const wdata = await wres.json();
+        const wishes = wdata.wishes || [];
+        let sum = 0, raised = 0;
+        wishes.forEach(w => {
+          sum += Number(w.price || 0);
+          raised += Number(w.raised || 0);
+        });
+        lst.__sum = sum;
+        lst.__raised = raised;
+        lst.__count = wishes.length;
+      }
+      renderMyLists();
+    }
+
+    function renderMyLists() {
+      mineListsEl.innerHTML = "";
+      if (!myLists.length) {
+        mineListsEl.innerHTML = "<div class='empty'>Пока нет вишлистов.</div>";
+        return;
+      }
+      myLists.forEach(lst => {
+        const pct = lst.__sum ? Math.min(100, Math.round((lst.__raised / lst.__sum) * 100)) : 0;
+        const div = document.createElement("div");
+        div.className = "list-card";
+        div.innerHTML = `
+          <div class="list-left">
+            <div class="list-icon" data-icon="${lst.id}">${lst.icon || "🎁"}</div>
+            <div>
+              <div class="list-card-title">${lst.name}</div>
+              <div class="pill-inline">${lst.__count} подарков · ${lst.__raised} / ${lst.__sum} ₽</div>
+              <div class="progressbar"><i style="width:${pct}%;"></i></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+            <button class="btn" data-open="${lst.id}">Открыть</button>
+            <button class="btn ghost" data-story="${lst.id}">Stories</button>
+          </div>
+        `;
+        div.querySelector("[data-open]").onclick = () => openList(lst);
+        div.querySelector("[data-story]").onclick = () => shareListStories(lst);
+        div.querySelector("[data-icon]").onclick = () => openIconDialog(lst.id);
+        mineListsEl.appendChild(div);
+      });
+    }
+
+    async function openList(lst) {
+      currentList = lst;
+      screenMine.style.display = "none";
+      screenFriends.style.display = "none";
+      screenShared.style.display = "none";
+      screenWishes.style.display = "block";
+      wishTitleEl.textContent = (lst.icon || "🎁") + " " + lst.name;
+      const res = await fetch(API_BASE + "/api/list/" + lst.id + "/wishes");
+      const data = await res.json();
+      currentListWishes = data.wishes || [];
+      renderWishes();
+    }
+
+    function renderWishes() {
+      wishListEl.innerHTML = "";
+      if (!currentListWishes.length) {
+        wishListEl.innerHTML = "<div class='empty'>В этом списке пока нет желаний.</div>";
+        return;
+      }
+      currentListWishes.forEach(w => {
+        const pct = w.price ? Math.min(100, Math.round((w.raised / w.price) * 100)) : 0;
+        const donors = (Array.isArray(w.donors) ? w.donors : []).filter(d => d.visible !== false);
+        const showDonors = currentList.show_donors !== false;
+        const donorsText = showDonors && donors.length
+          ? "Подарили: " + donors.map(d => d.from_name || ("id:" + d.from_user)).join(", ")
+          : "";
+        const div = document.createElement("div");
+        div.className = "wish-card";
+        div.innerHTML = `
+          <h3>${w.title}</h3>
+          ${w.url ? `<div class="muted"><a href="${w.url}" target="_blank" style="color:#8cb6ff;">${w.url}</a></div>` : ""}
+          ${w.price ? `<div class="muted" style="margin-top:2px;">Цель: ${w.price} ₽</div>` : ""}
+          <div class="progressbar" style="margin-top:6px;"><i style="width:${pct}%;"></i></div>
+          <div class="muted" style="margin-top:4px;">Собрано: ${w.raised} / ${w.price || 0} ₽</div>
+          ${donorsText ? `<div class="muted" style="margin-top:4px;">${donorsText}</div>` : ""}
+          <div class="wish-footer">
+            <button class="btn" data-donate="${w.id}">Задонатить</button>
+            <button class="btn ghost" data-share="${w.id}">Stories</button>
+          </div>
+        `;
+        div.querySelector("[data-donate]").onclick = () => openDonate(w);
+        div.querySelector("[data-share]").onclick = () => shareWishStories(currentList, w);
+        wishListEl.appendChild(div);
+      });
+    }
+
+    function openDonate(wish) {
+      // если в списке включен CloudTips — открываем его
+      if (currentList && currentList.payment_provider === "cloudtips" && currentList.payment_payload) {
+        const link = currentList.payment_payload;
+        if (tg && tg.openLink) tg.openLink(link);
+        else window.open(link, "_blank");
+        return;
+      }
+      donateTarget = wish;
+      document.getElementById("donateWishName").textContent = wish.title;
+      dlgDonate.showModal();
+    }
+
+    document.getElementById("confirmDonate").onclick = async () => {
+      if (!donateTarget) return dlgDonate.close();
+      const amount = Number(document.getElementById("donateAmount").value || 0);
+      if (!amount) return dlgDonate.close();
+      await fetch(API_BASE + "/api/donate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wish_id: donateTarget.id,
+          list_id: donateTarget.list_id,
+          from_user: currentUser?.id || "anon",
+          from_name: currentUser?.first_name || "",
+          amount,
+          visible: true
+        })
+      });
+      dlgDonate.close();
+      await openList(currentList);
+      await loadMyLists();
+    };
+
+    // новый список
+    document.getElementById("btnNewList").onclick = () => dlgList.showModal();
+    document.getElementById("saveList").onclick = async () => {
+      const name = document.getElementById("listName").value || "Новый список";
+      const icon = document.getElementById("listIcon").value || "🎁";
+      const mode = document.getElementById("listMode").value || "personal";
+      await fetch(API_BASE + "/api/list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tg_id: currentUser.id,
+          name,
+          icon,
+          mode,
+          members: []
+        })
+      });
+      dlgList.close();
+      await loadMyLists();
+    };
+
+    // новое желание
+    document.getElementById("btnNewWish").onclick = () => dlgWish.showModal();
+    document.getElementById("saveWish").onclick = async () => {
+      if (!currentList) return dlgWish.close();
+      const title = document.getElementById("wishName").value || "Без названия";
+      const url = document.getElementById("wishUrl").value;
+      const price = document.getElementById("wishPrice").value || 0;
+      await fetch(API_BASE + "/api/wish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tg_id: currentUser.id,
+          list_id: currentList.id,
+          title,
+          url,
+          price
+        })
+      });
+      dlgWish.close();
+      await openList(currentList);
+      await loadMyLists();
+    };
+
+    // назад
+    document.getElementById("backToLists").onclick = () => {
+      showTab(currentTab);
+      screenWishes.style.display = "none";
+    };
+
+    // stories по списку
+    function shareListStories(lst) {
+      const link = `https://t.me/your_bot?startapp=owner=${currentUser.id}&list=${lst.id}`;
+      if (tg && tg.shareUrl) tg.shareUrl(link);
+      else alert("Поделись ссылкой: " + link);
+    }
+
+    // stories по желанию
+    function shareWishStories(lst, wish) {
+      const link = `https://t.me/your_bot?startapp=owner=${currentUser.id}&list=${lst.id}&wish=${wish.id}`;
+      if (tg && tg.shareUrl) tg.shareUrl(link);
+      else alert("Поделись ссылкой: " + link);
+    }
+
+    // “попросить друга”
+    document.getElementById("btnInviteFriend").onclick = () => {
+      const link = `https://t.me/your_bot?startapp=invite_from=${currentUser?.id || "anon"}`;
+      if (tg && tg.shareUrl) tg.shareUrl(link);
+      else alert("Отправь другу: " + link);
+    };
+
+    // верхняя “поделиться”
+    document.getElementById("shareMyLists").onclick = () => {
+      const link = `https://t.me/your_bot?startapp=owner=${currentUser?.id || "anon"}`;
+      if (tg && tg.shareUrl) tg.shareUrl(link);
+      else alert("Отправь другу: " + link);
+    };
+
+    // выбор иконки
+    const emojis = ["🎁","🎂","🧸","💄","💻","📱","🎮","🏄‍♂️","🏕","🪄","🧴","💡","🧥","👟","🎧","📷","💍","🪙","💐"];
+    emojis.forEach(e => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "emoji-btn";
+      btn.textContent = e;
+      btn.onclick = async () => {
+        if (!iconTargetListId) return dlgIcons.close();
+        await fetch(API_BASE + "/api/list/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tg_id: currentUser.id,
+            list_id: iconTargetListId,
+            icon: e
+          })
+        });
+        dlgIcons.close();
+        await loadMyLists();
+      };
+      emojiGrid.appendChild(btn);
+    });
+
+    function openIconDialog(listId) {
+      iconTargetListId = listId;
+      dlgIcons.showModal();
+    }
+
+    // настройки списка
+    document.getElementById("btnListSettings").onclick = () => {
+      if (!currentList) return;
+      setVisibility.value = currentList.visibility || "public";
+      setShowDonors.value = currentList.show_donors === false ? "false" : "true";
+      setPaymentProvider.value = currentList.payment_provider || "";
+      setPaymentPayload.value = currentList.payment_payload || "";
+      dlgSettings.showModal();
+    };
+
+    document.getElementById("saveSettings").onclick = async () => {
+      if (!currentList) return dlgSettings.close();
+      const body = {
+        tg_id: currentUser.id,
+        list_id: currentList.id,
+        visibility: setVisibility.value,
+        show_donors: setShowDonors.value === "true",
+        payment_provider: setPaymentProvider.value || null,
+        payment_payload: setPaymentPayload.value || null,
+      };
+      await fetch(API_BASE + "/api/list/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      dlgSettings.close();
+      await loadMyLists();
+      if (currentList && currentList.id === body.list_id) {
+        currentList.visibility = body.visibility;
+        currentList.show_donors = body.show_donors;
+        currentList.payment_provider = body.payment_provider;
+        currentList.payment_payload = body.payment_payload;
+      }
+    };
+
+    // старт
+    (async () => {
+      await ensureUser();
+      await loadMyLists();
+    })();
+  </script>
+</body>
+</html>
