@@ -1,1712 +1,1191 @@
-
-Fix Russian language display issues
-14 нояб.
-·
-wishmakers
-·
-main
-
-Архивировать
-
-Поделиться
-Посмотреть PR
-
-
-у меня есть код
-@DOCTYPE html
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-  <title>OnlyWishes</title>
-  <style>
-    /* ===== THEMES ===== */
-    :root{
-      --bg:#f5f7fb;
-      --text:#111318;
-      --muted:rgba(17,19,24,.55);
-      --chip-bg:rgba(0,0,0,.08);
-      --chip-border:rgba(0,0,0,.06);
-      --btn-ghost:rgba(0,0,0,.08);
-      --btn-ghost-br:rgba(0,0,0,.06);
-      --friend-card:#fff;
-      --friend-sub:rgba(17,19,24,.55);
-      --top-add-bg:#fff; --top-add-text:#000;
-    }
-    [data-theme="dark"]{
-      --bg:#101318;
-      --text:#fff;
-      --muted:rgba(255,255,255,.55);
-      --chip-bg:rgba(255,255,255,.07);
-      --chip-border:rgba(255,255,255,.03);
-      --btn-ghost:rgba(255,255,255,.07);
-      --btn-ghost-br:rgba(255,255,255,.03);
-      --friend-card:rgba(255,255,255,.02);
-      --friend-sub:rgba(255,255,255,.55);
-      --top-add-bg:#fff; --top-add-text:#000;
-    }
-
-    /* ===== BASE ===== */
-    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
-    .screen{padding:12px 18px 110px}
-    .top-line{display:flex;justify-content:flex-end;align-items:center;margin-bottom:6px}
-    .circle-btn{width:40px;height:40px;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-border);display:grid;place-items:center;cursor:pointer;font-size:18px;color:var(--text)}
-
-    .avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:10px}
-    .avatar{width:88px;height:88px;border-radius:999px;background:linear-gradient(140deg,#ffb347 0%,#ff7751 100%);display:grid;place-items:center;font-weight:650;font-size:26px;overflow:hidden;color:#fff}
-    .name{font-size:19px;font-weight:650}
-    .subline{font-size:13px;color:var(--muted)}
-
-    .top-add{margin:10px auto 12px;background:var(--top-add-bg);color:var(--top-add-text);border-radius:999px;height:42px;min-width:210px;display:flex;justify-content:center;align-items:center;gap:8px;font-weight:500;font-size:15px;cursor:pointer;max-width:620px}
-
-    .tabs{display:flex;gap:10px;margin:10px auto 12px;justify-content:flex-start;max-width:620px}
-    .tab{font-size:15px;color:var(--muted);cursor:pointer}
-    .tab.active{color:var(--text);font-weight:550}
-
-    /* ===== LIST CARD ===== */
-    .wl-card{position:relative;border-radius:22px;padding:14px 14px 12px;margin-bottom:12px;max-width:620px;margin-inline:auto;display:flex;gap:14px;overflow:hidden;background-size:cover;background-position:center}
-    .wl-card::before{content:"";width:4px;border-radius:999px;background:linear-gradient(180deg,rgba(255,179,71,.9) 0%,rgba(255,119,81,.9) 100%);align-self:stretch;position:relative;z-index:2}
-    .wl-content{flex:1;position:relative;z-index:3}
-    .wl-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-    .wl-title{font-size:18px;font-weight:650;color:#fff}
-    .wl-sub{font-size:13px;color:rgba(255,255,255,.78)}
-    .wl-more{width:30px;height:30px;border-radius:999px;background:rgba(0,0,0,.25);display:grid;place-items:center;font-size:18px;cursor:pointer;color:#fff}
-    .wl-bottom{display:flex;gap:8px;margin-top:10px;align-items:center}
-    .tile-plus,.tile-ghost,.tile-img{width:48px;height:48px;border-radius:999px}
-    .tile-plus{background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:24px;cursor:pointer;color:#fff}
-    .tile-ghost,.tile-img{background:rgba(255,255,255,.08);display:grid;place-items:center;overflow:hidden}
-    .tile-img img{width:100%;height:100%;object-fit:cover}
-
-    /* ===== FRIEND CARD ===== */
-    .friend-card{position:relative;border-radius:22px;padding:14px 14px 12px;margin-bottom:12px;max-width:620px;margin-inline:auto;display:flex;gap:14px;overflow:hidden;background:var(--friend-card)}
-    .friend-card::before{content:"";width:4px;border-radius:999px;background:linear-gradient(180deg,rgba(255,179,71,.9) 0%,rgba(255,119,81,.9) 100%);align-self:stretch;position:relative;z-index:2}
-    .friend-content{flex:1;position:relative;z-index:3}
-    .friend-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .friend-head{display:flex;align-items:center;gap:10px}
-    .friend-ava{width:36px;height:36px;border-radius:999px;overflow:hidden;background:rgba(0,0,0,.06);display:grid;place-items:center;font-weight:700;color:#fff}
-    .friend-ava img{width:100%;height:100%;object-fit:cover}
-    .friend-title{font-size:16px;font-weight:650;color:var(--text)}
-    .friend-sub{font-size:12px;color:var(--friend-sub);margin-top:2px}
-    .friends-bottom-btn{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:var(--btn-ghost);border:1px solid var(--btn-ghost-br);border-radius:999px;height:38px;padding:0 20px;display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;backdrop-filter:blur(6px);color:var(--text)}
-
-    /* ===== LIST VIEW (grid) ===== */
-    .list-view{
-      position:fixed;
-      inset:0;
-      z-index:900;
-      background:#101318;
-      background-size:cover;
-      background-position:center;
-      padding:14px 16px 110px;
-      overflow-y:auto;
-    }
-    .list-view-content{position:relative;z-index:2}
-    .list-view-top{display:flex;justify-content:space-between;align-items:center}
-    .list-view-title{text-align:center;font-size:26px;font-weight:700;margin-top:10px;color:#fff}
-    .wish-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:12px;margin-top:18px}
-
-    /* Плашка желания */
-    .wish-box{
-      position:relative;
-      border-radius:20px;
-      overflow:hidden;
-      min-height:150px;
-      background:#2a2d33;
-      cursor:pointer;
-    }
-    .wish-box-img{
-      position:absolute;
-      inset:0;
-      background:#454950;
-      background-size:cover;
-      background-position:center;
-    }
-    .wish-box-body{
-      position:absolute;
-      left:0;right:0;bottom:0;
-      padding:8px 10px 10px;
-      background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.86));
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .wish-box-title{
-      font-size:12.5px;
-      font-weight:600;
-      color:#ffffff;
-      line-height:1.15;
-    }
-    .wish-box-sub{
-      font-size:11px;
-      color:rgba(255,255,255,.7);
-      margin-top:2px;
-    }
-    .wish-box-price{
-      font-size:13px;
-      font-weight:700;
-      color:#7CFC9A;
-      margin-top:2px;
-    }
-
-    /* ===== BOTTOM ACTIONS (list view) ===== */
-    .list-bottom-row{
-      position:fixed;
-      left:50%;
-      transform:translateX(-50%);
-      bottom:18px;
-      display:flex;
-      gap:14px;
-      z-index:20;
-    }
-    .lb-round{
-      width:54px;
-      height:54px;
-      border-radius:999px;
-      background:#fff;
-      color:#000;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:24px;
-      cursor:pointer;
-      box-shadow:0 8px 24px rgba(0,0,0,.35);
-    }
-
-    /* ===== CREATE / EDIT LIST ===== */
-    .create-overlay{position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#101318;background-size:cover;background-position:center}
-    .create-stack{display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;transform:translateY(-24px)}
-    .create-gradient-row{display:flex;gap:12px;align-items:center;justify-content:flex-start;max-width:92vw;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 4px 10px}
-    .create-gradient-row::-webkit-scrollbar{display:none}
-    .chip,.color-circle{flex:0 0 auto;width:40px;height:40px;border-radius:999px;display:grid;place-items:center;cursor:pointer;user-select:none;box-sizing:border-box}
-    .chip{background:#fff;color:#000;border:2px solid #fff}
-    .chip-icon{font-size:20px}
-    .chip-palette{background:#fff;border:2px solid #fff}
-    .chip-palette svg{width:20px;height:20px;display:block}
-    .color-circle{border:2px solid #fff}
-    .color-circle.active{outline:3px solid #fff; outline-offset:0}
-
-    .create-title-input{font-size:26px;font-weight:700;border:none;outline:none;background:transparent;text-align:center;color:#fff}
-    .create-actions-row{display:flex;gap:16px;justify-content:center}
-    .create-icon-big{width:60px;height:60px;border-radius:999px;background:rgba(255,255,255,.95);display:grid;place-items:center;cursor:pointer;font-size:22px;color:#000;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-
-    /* Inline palette panel */
-    .palette-inline{
-      margin-top:8px;
-      background:rgba(0,0,0,.38);
-      border-radius:14px;
-      padding:8px 10px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      color:#fff;
-      font-size:12px;
-    }
-    .palette-inline-row{display:flex;align-items:center;gap:8px}
-    .palette-inline-row label{opacity:.75}
-
-    /* Bottom sheet (upload background) */
-    .sheet-overlay{position:fixed;inset:0;z-index:6000}
-    .sheet{position:absolute;left:0;right:0;bottom:0;background:rgba(20,22,26,.98);border-radius:18px 18px 0 0;padding:14px 14px 18px;color:#fff}
-    .sheet-item{padding:12px 8px;border-radius:12px;background:rgba(255,255,255,.06);margin-bottom:8px;text-align:center;cursor:pointer}
-
-    /* ===== WISH BOTTOM SHEET ===== */
-    .wish-overlay{
-      position:fixed;
-      inset:0;
-      z-index:4000;
-      background:rgba(0,0,0,.55);
-      display:flex;
-      justify-content:center;
-      align-items:stretch;
-    }
-    .wish-sheet{
-      width:100%;
-      max-width:640px;
-      height:100vh;
-      max-height:100vh;
-      background:linear-gradient(160deg,#161920 0%,#07090d 100%);
-      border-radius:18px 18px 0 0;
-      border:1px solid rgba(255,255,255,.06);
-      padding:10px 16px 14px;
-      box-shadow:0 -14px 30px rgba(0,0,0,.7);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      color:#fff;
-      transform:translateY(0);
-      touch-action:none;
-      margin:0 auto;
-    }
-    .wish-drag{
-      width:44px;
-      height:4px;
-      border-radius:999px;
-      background:rgba(255,255,255,.28);
-      margin:4px auto 2px;
-    }
-    .wish-sheet-scroll{
-      overflow-y:auto;
-      padding-top:4px;
-      padding-bottom:8px;
-      max-height:calc(100vh - 90px);
-    }
-
-    .wish-title-row{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:6px;
-    }
-    .wish-heading{
-      font-size:15px;
-      font-weight:600;
-      opacity:.9;
-    }
-
-    .wish-input-block{
-      background:rgba(255,255,255,.03);
-      border-radius:14px;
-      padding:8px 10px;
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      margin-bottom:8px;
-    }
-    .wish-label{
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:.03em;
-      opacity:.55;
-    }
-    .wish-input{
-      background:transparent;
-      border:none;
-      outline:none;
-      color:#fff;
-      font-size:14px;
-      width:100%;
-    }
-    .wish-input::placeholder{color:rgba(255,255,255,.35);}
-
-    .wish-img-row{
-      display:flex;
-      gap:10px;
-      margin-top:4px;
-      overflow-x:auto;
-      padding-bottom:4px;
-    }
-    .wish-img-row::-webkit-scrollbar{display:none}
-    .wish-img-tile{
-      flex:0 0 auto;
-      width:64px;
-      height:64px;
-      border-radius:14px;
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-      box-sizing:border-box;
-      border:2px solid rgba(255,255,255,.15);
-      background:#252831;
-      background-size:cover;
-      background-position:center;
-      color:#fff;
-      font-size:24px;
-    }
-    .wish-img-tile.active{
-      border-color:#ffffff;
-      box-shadow:0 0 0 2px rgba(255,255,255,.25);
-    }
-
-    .wish-bottom-actions{
-      margin-top:4px;
-      display:flex;
-      justify-content:center;
-      gap:18px;
-      padding-bottom:4px;
-    }
-    .wish-round-big{
-      width:60px;
-      height:60px;
-      border-radius:999px;
-      background:#fff;
-      color:#000;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:24px;
-      cursor:pointer;
-      box-shadow:0 10px 30px rgba(0,0,0,.6);
-    }
-
-    .wish-clip-btn{
-      border:none;
-      border-radius:999px;
-      padding:6px 10px;
-      font-size:11px;
-      background:rgba(255,255,255,.12);
-      color:#fff;
-      cursor:pointer;
-      white-space:nowrap;
-    }
-    .wish-clip-btn:active{transform:scale(.97);}
-
-    /* menus */
-    .more-menu{position:fixed;background:#121419;border-radius:16px;overflow:hidden;min-width:210px;z-index:3000;border:1px solid rgba(255,255,255,.03);color:#fff}
-    .more-item{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:14px;gap:6px;cursor:pointer}
-    .more-item:not(:last-child){border-bottom:1px solid rgba(255,255,255,.08)}
-    .more-item.danger{color:#ff6b6b}
-  </style>
-</head>
-<body data-theme="light">
-  <div class="screen" id="app">
-    <div class="top-line">
-      <div class="circle-btn" id="themeToggle" title="Тема">☾</div>
-    </div>
-
-    <div class="avatar-wrap">
-      <div class="avatar" id="avatarInitials">IP</div>
-      <div class="name" id="profileName">Илья Пономарёв</div>
-      <div class="subline" id="profileStats">—</div>
-    </div>
-
-    <div class="top-add" id="topAdd"><span style="font-size:20px;">+</span> Создать список</div>
-
-    <div class="tabs" id="tabs"></div>
-    <div id="content"></div>
-  </div>
-
-  <script>
-    /* GRADIENTS (1,2,3,5 + dark green) */
-    const GRADIENTS=[
-      "linear-gradient(135deg,#c084fc 0%,#8ec5fc 100%)",
-      "linear-gradient(135deg,#ff9a9e 0%,#fecfef 100%)",
-      "linear-gradient(135deg,#5ee7df 0%,#b490ca 100%)",
-      "linear-gradient(135deg,#f6d365 0%,#fda085 100%)",
-      "linear-gradient(135deg,#0b3d2e 0%, #0f7b5c 100%)"
-    ];
-    const DEFAULT_GRADIENT=GRADIENTS[0];
-
-    /* STATE */
-    const state={
-      sections:[{id:"lists",name:"Списки"},{id:"friends",name:"Друзья"}],
-      currentSection:"lists",
-      lists:[
-        {id:"l1",name:"Мои желания",items:[
-          {id:"w1",title:"VR-шлем",link:"#",image:"https://picsum.photos/300/200?vr",price:"38 500 ₽",desc:""},
-          {id:"w2",title:"Кроссовки",link:"#",image:"https://picsum.photos/300/200?sneaker",price:"8 700 ₽",desc:""},
-        ],gradient:DEFAULT_GRADIENT},
-        {id:"l2",name:"День рождения",items:[],gradient:GRADIENTS[3]},
-      ],
-      friends:[
-        {id:"f1",name:"Марина Иванова",tg:"marina",photo:"https://i.pravatar.cc/100?img=47"},
-        {id:"f2",name:"Андрей",tg:"andrew",photo:"https://i.pravatar.cc/100?img=12"},
-      ],
-      friendLists:{
-        f1:[{id:"f1l1",name:"Подарки Марине",items:[{id:"fw1",title:"Аромасвечи",image:"https://picsum.photos/300/200?candle",price:"1 200 ₽",desc:""}],gradient:GRADIENTS[0]}],
-        f2:[{id:"f2l1",name:"Гаджеты",items:[{id:"f2w1",title:"Квадрокоптер",image:"https://picsum.photos/300/200?drone",price:"27 000 ₽",desc:""}],gradient:GRADIENTS[2]}],
-      },
-      openedListId:null,openedFriendId:null,
-      theme: localStorage.getItem("ow-theme") || "light",
-    };
-
-    /* THEME APPLY + TOGGLE */
-    function applyTheme(t){
-      document.body.setAttribute("data-theme",t);
-      const btn=document.getElementById("themeToggle");
-      btn.textContent = t==="dark" ? "☀︎" : "☾";
-      localStorage.setItem("ow-theme",t);
-    }
-    document.getElementById("themeToggle").onclick=()=>{
-      state.theme = (state.theme==="dark"?"light":"dark");
-      applyTheme(state.theme);
-    };
-    applyTheme(state.theme);
-
-    /* UI HELPERS */
-    const tabsEl=document.getElementById("tabs");
-    const contentEl=document.getElementById("content");
-    function decl(n,forms){const m=Math.abs(n)%100;const n1=m%10;if(m>10&&m<20)return forms[2];if(n1>1&&n1<5)return forms[1];if(n1===1)return forms[0];return forms[2];}
-
-    /* TABS */
-    function renderTabs(){
-      tabsEl.innerHTML="";
-      state.sections.forEach(s=>{
-        const el=document.createElement("div");
-        el.className="tab"+(state.currentSection===s.id?" active":"");
-        el.textContent=s.name;
-        el.onclick=()=>{state.currentSection=s.id;state.openedListId=null;state.openedFriendId=null;renderTabs();renderSection();};
-        tabsEl.appendChild(el);
-      });
-    }
-
-    /* SECTIONS */
-    function renderSection(){
-      const totalLists=state.lists.length;
-      const totalWishes=state.lists.reduce((sum,l)=>sum+(l.items?l.items.length:0),0);
-      document.querySelector("#profileStats").textContent=
-        `${totalLists} ${decl(totalLists,["список","списка","списков"])}, `+
-        `${totalWishes} ${decl(totalWishes,["желание","желания","желаний"])}`;
-
-      if(state.openedListId){renderListView(state.openedListId,false);return;}
-      if(state.openedFriendId){renderFriendLists(state.openedFriendId);return;}
-      if(state.currentSection==="lists") renderLists(); else renderFriends();
-    }
-
-    function renderLists(){
-      contentEl.innerHTML="";
-      state.lists.forEach(lst=>{
-        const card=document.createElement("div");
-        card.className="wl-card";
-        if(lst.bgImage) card.style.backgroundImage=`url(${lst.bgImage})`;
-        else if(lst.gradient) card.style.background=lst.gradient;
-        const c=(lst.items||[]).length;
-        card.innerHTML=`
-          <div class="wl-content">
-            <div class="wl-top">
-              <div>
-                <div class="wl-title">${lst.name}</div>
-                <div class="wl-sub">${c?`${c} ${decl(c,["желание","желания","желаний"])} ›`:"Пока нет желаний ›"}</div>
-              </div>
-              <div class="wl-more" data-id="${lst.id}">⋯</div>
-            </div>
-            <div class="wl-bottom">
-              <div class="tile-plus" data-addwish="${lst.id}">+</div>
-              ${renderPreviewTiles(lst)}
-            </div>
-          </div>`;
-        card.addEventListener("click",(e)=>{
-          if(e.target.closest("[data-addwish]")){openWishEditor({listId:lst.id});return;}
-          if(e.target.closest(".wl-more")) return;
-          state.openedListId=lst.id;renderSection();
-        });
-        contentEl.appendChild(card);
-      });
-    }
-
-    function renderPreviewTiles(lst){
-      const imgs=(lst.items||[]).filter(w=>w.image).slice(0,3);
-      const has=(lst.items||[]).length>0;
-      const op=[1,.7,.4];
-      let html="";
-      for(let i=0;i<3;i++){
-        if(imgs[i]) html+=`<div class="tile-img" style="opacity:${has?1:op[i]};"><img src="${imgs[i].image}" alt=""></div>`;
-        else html+=`<div class="tile-ghost" style="opacity:${has?1:op[i]};"></div>`;
-      }
-      return html;
-    }
-
-    function renderFriends(){
-      contentEl.innerHTML="";
-      state.friends.forEach(fr=>{
-        const card=document.createElement("div");
-        card.className="friend-card";
-        const lists=(state.friendLists[fr.id]||[]);
-        const lc=lists.length;
-        const wc=lists.reduce((a,l)=>a+(l.items?l.items.length:0),0);
-
-        const initials=(fr.name||"U").split(" ").map(s=>s[0]).slice(0,2).join("").toUpperCase();
-        const ava = fr.photo ? `<img src="${fr.photo}" alt="">` : initials;
-
-        card.innerHTML=`
-          <div class="friend-content">
-            <div class="friend-top">
-              <div class="friend-head">
-                <div class="friend-ava">${ava}</div>
-                <div>
-                  <div class="friend-title">${fr.name}</div>
-                  <div class="friend-sub">@${fr.tg||"username"}</div>
-                </div>
-              </div>
-              <div style="opacity:.35;color:var(--text);">›</div>
-            </div>
-            <div class="friend-sub" style="margin-top:6px;">
-              ${lc} ${decl(lc,["список","списка","списков"])}, ${wc} ${decl(wc,["желание","желания","желаний"])}
-            </div>
-          </div>`;
-        card.onclick=()=>{state.openedFriendId=fr.id;renderSection();};
-        contentEl.appendChild(card);
-      });
-
-      const invite=document.createElement("div");
-      invite.className="friends-bottom-btn";
-      invite.innerHTML=`<span style="font-size:18px;">+</span> Пригласить друга`;
-      invite.onclick=()=>alert("Пригласить друга");
-      contentEl.appendChild(invite);
-    }
-
-    /* Friend → his lists */
-    function renderFriendLists(friendId){
-      const lists=state.friendLists[friendId]||[];
-      contentEl.innerHTML="";
-      const wrap=document.createElement("div");
-      wrap.className="list-view";
-      wrap.innerHTML=`<div class="list-view-content">
-        <div class="list-view-top">
-          <div class="circle-btn" id="fvClose">✕</div>
-          <div style="width:40px;height:40px;"></div>
-        </div>
-        <div class="list-view-title">Списки друга</div>
-        <div id="friendLists" style="margin-top:16px;"></div>
-      </div>`;
-      contentEl.appendChild(wrap);
-
-      const fl=document.getElementById("friendLists");
-      lists.forEach(lst=>{
-        const card=document.createElement("div");
-        card.className="wl-card";
-        if(lst.bgImage) card.style.backgroundImage=`url(${lst.bgImage})`; else if(lst.gradient) card.style.background=lst.gradient;
-        const c=(lst.items||[]).length;
-        card.innerHTML=
-          `<div class="wl-content">
-             <div class="wl-top">
-               <div>
-                 <div class="wl-title">${lst.name}</div>
-                 <div class="wl-sub">${c} ${decl(c,["желание","желания","желаний"])}</div>
-               </div>
-             </div>
-             <div class="wl-bottom">${renderPreviewTiles(lst)}</div>
-           </div>`;
-        card.onclick=()=>renderListView(lst.id,true,friendId);
-        fl.appendChild(card);
-      });
-
-      document.getElementById("fvClose").onclick=()=>{state.openedFriendId=null;renderSection();};
-    }
-
-    /* List details */
-    function renderListView(listId,isFriend=false,friendId=null){
-      let lst;
-      if(!isFriend){
-        lst=state.lists.find(l=>l.id===listId);
-      }else{
-        const arr=state.friendLists[friendId]||[];
-        lst=arr.find(l=>l.id===listId);
-      }
-      if(!lst) return;
-
-      contentEl.innerHTML="";
-      const wrap=document.createElement("div");
-      wrap.className="list-view";
-      if(lst.bgImage) wrap.style.backgroundImage=`url(${lst.bgImage})`;
-      else if(lst.gradient) wrap.style.background=lst.gradient;
-
-      wrap.innerHTML=`<div class="list-view-content">
-        <div class="list-view-top">
-          <div class="circle-btn" id="lvClose">✕</div>
-          <div style="width:40px;height:40px;"></div>
-        </div>
-        <div class="list-view-title">${lst.name}</div>
-        <div class="wish-grid" id="wishGrid"></div>
-      </div>
-      <div class="list-bottom-row">
-        <div class="lb-round" id="lbEdit">✎</div>
-        <div class="lb-round" id="lbAdd">+</div>
-        <div class="lb-round" id="lbShare">⤴︎</div>
-      </div>`;
-      contentEl.appendChild(wrap);
-
-      const grid=document.getElementById("wishGrid");
-      if(!lst.items||!lst.items.length){
-        const empty=document.createElement("div");
-        empty.style.opacity=".6";
-        empty.style.marginTop="20px";
-        empty.style.color="#fff";
-        empty.textContent="Пока нет желаний";
-        grid.appendChild(empty);
-      }else{
-        lst.items.forEach(w=>{
-          const c=document.createElement("div");c.className="wish-box";
-          const img=w.image
-            ? `<div class="wish-box-img" style="background-image:url(${w.image});"></div>`
-            : `<div class="wish-box-img"></div>`;
-          let bottom;
-          if(w.price){
-            bottom=`<div class="wish-box-price">${w.price}</div>`;
-          }else if(w.desc){
-            bottom=`<div class="wish-box-sub">${w.desc}</div>`;
-          }else{
-            bottom=`<div class="wish-box-sub">${w.link?"ссылка есть":"без ссылки"}</div>`;
-          }
-          c.innerHTML=`${img}
-            <div class="wish-box-body">
-              <div class="wish-box-title">${w.title}</div>
-              ${bottom}
-            </div>`;
-          c.onclick=()=>{ if(!isFriend) openWishEditor({listId:listId,wishId:w.id}); };
-          grid.appendChild(c);
-        });
-      }
-
-      document.getElementById("lvClose").onclick=()=>{
-        if(isFriend){renderFriendLists(friendId);}
-        else{state.openedListId=null;renderSection();}
-      };
-
-      const shareBtn=document.getElementById("lbShare");
-      shareBtn.onclick=()=>alert("Ссылка: https://t.me/your_bot?list="+listId);
-
-      const addBtn=document.getElementById("lbAdd");
-      if(addBtn){
-        if(isFriend) addBtn.onclick=()=>alert("Это список друга");
-        else addBtn.onclick=()=>openWishEditor({listId});
-      }
-
-      const editBtn=document.getElementById("lbEdit");
-      if(editBtn){
-        if(isFriend) editBtn.onclick=()=>alert("Это список друга");
-        else editBtn.onclick=()=>openCreateListScreen(lst);
-      }
-    }
-
-    /* ===== HELPERS ===== */
-    function isProbablyLink(str){
-      const v=str.trim();
-      if(!v) return false;
-      return v.startsWith("http://") || v.startsWith("https://") || v.includes(".");
-    }
-
-    /* ===== WISH BOTTOM SHEET EDITOR ===== */
-    function openWishEditor({listId,wishId=null}){
-      const list=state.lists.find(l=>l.id===listId); if(!list) return;
-      const wish=wishId?list.items.find(i=>i.id===wishId):null;
-
-      const overlay=document.createElement("div");
-      overlay.className="wish-overlay";
-
-      const sheet=document.createElement("div");
-      sheet.className="wish-sheet";
-      overlay.appendChild(sheet);
-
-      const drag=document.createElement("div");
-      drag.className="wish-drag";
-      sheet.appendChild(drag);
-
-      const scrollZone=document.createElement("div");
-      scrollZone.className="wish-sheet-scroll";
-      sheet.appendChild(scrollZone);
-
-      const titleRow=document.createElement("div");
-      titleRow.className="wish-title-row";
-      titleRow.innerHTML=`<div class="wish-heading">${wish?"Редактирование желания":"Новое желание"}</div>`;
-      scrollZone.appendChild(titleRow);
-
-      // 1. Название
-      const titleBlock=document.createElement("div");
-      titleBlock.className="wish-input-block";
-      titleBlock.innerHTML=`
-        <div class="wish-label">Название</div>
-        <input class="wish-input" id="w_title" placeholder="Например, наушники Sony"
-               value="${wish ? (wish.title || "") : ""}">
-      `;
-      scrollZone.appendChild(titleBlock);
-
-      // 2. Ссылка + кнопка "Вставить"
-      const linkBlock=document.createElement("div");
-      linkBlock.className="wish-input-block";
-      linkBlock.innerHTML=`
-        <div class="wish-label">Ссылка</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input class="wish-input" id="w_link" placeholder="Вставьте ссылку"
-                 value="${wish ? (wish.link || "") : ""}">
-          <button type="button" class="wish-clip-btn" id="w_paste">Вставить</button>
-        </div>
-      `;
-      scrollZone.appendChild(linkBlock);
-
-      // 3. Изображения — квадраты
-      const imgLabelBlock=document.createElement("div");
-      imgLabelBlock.className="wish-input-block";
-      imgLabelBlock.style.background="transparent";
-      imgLabelBlock.style.paddingBottom="4px";
-      imgLabelBlock.innerHTML=`<div class="wish-label">Изображение</div>`;
-      scrollZone.appendChild(imgLabelBlock);
-
-      const imgRow=document.createElement("div");
-      imgRow.className="wish-img-row";
-      scrollZone.appendChild(imgRow);
-
-      // 4. Описание
-      const descBlock=document.createElement("div");
-      descBlock.className="wish-input-block";
-      descBlock.innerHTML=`
-        <div class="wish-label">Описание</div>
-        <textarea class="wish-input" id="w_desc" rows="2" style="resize:none;"
-                  placeholder="Размер, цвет, любые пожелания...">${wish?(wish.desc||""):""}</textarea>
-      `;
-      scrollZone.appendChild(descBlock);
-
-      // 5. Стоимость
-      const priceBlock=document.createElement("div");
-      priceBlock.className="wish-input-block";
-      priceBlock.innerHTML=`
-        <div class="wish-label">Стоимость</div>
-        <input class="wish-input" id="w_price" placeholder="Например, 4 990 ₽"
-               value="${wish?(wish.price||""):""}">
-      `;
-      scrollZone.appendChild(priceBlock);
-
-      let currentImage = wish ? (wish.image||"") : "";
-      let imageOptions = [];
-
-      const fileInput=document.createElement("input");
-      fileInput.type="file";
-      fileInput.accept="image/*";
-      fileInput.style.display="none";
-      overlay.appendChild(fileInput);
-
-      function rebuildImageRow(){
-        imgRow.innerHTML="";
-
-        // плюс
-        const plusTile=document.createElement("div");
-        plusTile.className="wish-img-tile";
-        plusTile.innerHTML="+";
-        plusTile.onclick=()=>fileInput.click();
-        imgRow.appendChild(plusTile);
-
-        // две подарочные коробки
-        const giftImages=[
-          "https://img.icons8.com/emoji/96/gift-emoji.png",
-          "https://img.icons8.com/emoji/96/wrapped-gift-emoji.png"
-        ];
-        giftImages.forEach((src,idx)=>{
-          const t=document.createElement("div");
-          t.className="wish-img-tile";
-          t.style.backgroundImage=`url(${src})`;
-          t.style.opacity = idx===0 ? "1" : "0.55";
-          if(currentImage===src) t.classList.add("active");
-          t.onclick=()=>{
-            currentImage=src;
-            imgRow.querySelectorAll(".wish-img-tile").forEach(x=>x.classList.remove("active"));
-            t.classList.add("active");
-          };
-          imgRow.appendChild(t);
-        });
-
-        // остальные варианты (кроме подарочных)
-        imageOptions.forEach(src=>{
-          if(giftImages.includes(src)) return;
-          const t=document.createElement("div");
-          t.className="wish-img-tile";
-          t.style.backgroundImage=`url(${src})`;
-          if(src===currentImage) t.classList.add("active");
-          t.onclick=()=>{
-            currentImage=src;
-            imgRow.querySelectorAll(".wish-img-tile").forEach(x=>x.classList.remove("active"));
-            t.classList.add("active");
-          };
-          imgRow.appendChild(t);
-        });
-
-        if(currentImage &&
-           !imageOptions.includes(currentImage) &&
-           !giftImages.includes(currentImage)){
-          imageOptions.unshift(currentImage);
-        }
-      }
-
-      fileInput.onchange=e=>{
-        const f=e.target.files[0];
-        if(!f) return;
-        const r=new FileReader();
-        r.onload=ev=>{
-          currentImage=ev.target.result;
-          imageOptions.unshift(currentImage);
-          rebuildImageRow();
-        };
-        r.readAsDataURL(f);
-      };
-
-      function autoFillFromLink(link){
-        const titleInput=document.getElementById("w_title");
-        const descInput=document.getElementById("w_desc");
-        const priceInput=document.getElementById("w_price");
-
-        try{
-          const url=new URL(link.includes("://")?link:"https://"+link);
-          const path=url.pathname.split("/").filter(Boolean);
-          let base=path[path.length-1]||url.hostname;
-          base=decodeURIComponent(base.replace(/[-_]/g," "));
-          if(base.length>60) base=base.slice(0,57)+"…";
-
-          if(titleInput && !titleInput.value.trim()){
-            titleInput.value=base;
-          }
-
-          imageOptions=[
-            `https://picsum.photos/seed/${encodeURIComponent(url.hostname+"-1")}/300/200`,
-            `https://picsum.photos/seed/${encodeURIComponent(url.hostname+"-2")}/300/200`,
-            `https://picsum.photos/seed/${encodeURIComponent(url.hostname+"-3")}/300/200`
-          ];
-          currentImage=imageOptions[0];
-          rebuildImageRow();
-
-          if(descInput && !descInput.value.trim()){
-            descInput.value="Данные по товару подтянуты по ссылке";
-          }
-          if(priceInput && !priceInput.value.trim()){
-            priceInput.placeholder="Цена подтянется из магазина";
-          }
-        }catch(e){
-          imageOptions=[
-            `https://picsum.photos/seed/${encodeURIComponent(link+"-1")}/300/200`,
-            `https://picsum.photos/seed/${encodeURIComponent(link+"-2")}/300/200`
-          ];
-          currentImage=imageOptions[0];
-          rebuildImageRow();
-        }
-      }
-
-      // стартовое состояние
-      if(wish){
-        if(wish.image){
-          currentImage=wish.image;
-          imageOptions=[wish.image];
-        }else if(wish.link){
-          autoFillFromLink(wish.link);
-        }
-      }
-      rebuildImageRow();
-
-      document.body.appendChild(overlay);
-
-      const linkInput=document.getElementById("w_link");
-      const pasteBtn=document.getElementById("w_paste");
-
-      if(pasteBtn && navigator.clipboard && navigator.clipboard.readText){
-        pasteBtn.onclick=async ()=>{
-          try{
-            const txt=await navigator.clipboard.readText();
-            if(txt){
-              linkInput.value=txt;
-              linkInput.focus();
-              linkInput.dispatchEvent(new Event("blur"));
-            }
-          }catch(err){
-            alert("Не удалось прочитать буфер обмена");
-          }
-        };
-      }else if(pasteBtn){
-        pasteBtn.style.display="none";
-      }
-
-      if(linkInput){
-        linkInput.addEventListener("blur",()=>{
-          let v=linkInput.value.trim();
-          if(!v) return;
-          if(!isProbablyLink(v)) return;
-          if(!/^https?:\/\//.test(v)) v="https://"+v;
-          linkInput.value=v;
-          autoFillFromLink(v);
-        });
-      }
-
-      function closeOverlay(){
-        overlay.remove();
-      }
-
-      // Низ: крестик и галочка
-      const bottomRow=document.createElement("div");
-      bottomRow.className="wish-bottom-actions";
-      bottomRow.innerHTML=`
-        <div class="wish-round-big" id="w_cancel">✕</div>
-        <div class="wish-round-big" id="w_save">✓</div>
-      `;
-      scrollZone.appendChild(bottomRow);
-
-      document.getElementById("w_cancel").onclick=closeOverlay;
-
-      document.getElementById("w_save").onclick=()=>{
-        const titleVal=(document.getElementById("w_title")?.value.trim()) || "";
-        let linkVal=(document.getElementById("w_link")?.value.trim()) || "";
-        const descVal=(document.getElementById("w_desc")?.value.trim()) || "";
-        const priceVal=(document.getElementById("w_price")?.value.trim()) || "";
-
-        if(!titleVal && !linkVal){
-          alert("Добавь хотя бы название или ссылку");
-          return;
-        }
-        if(linkVal && !/^https?:\/\//.test(linkVal) && isProbablyLink(linkVal)){
-          linkVal="https://"+linkVal;
-        }
-
-        if(wish){
-          wish.title=titleVal || wish.title || "Без названия";
-          wish.link=linkVal;
-          wish.desc=descVal;
-          wish.price=priceVal;
-          wish.image=currentImage;
-        }else{
-          list.items.push({
-            id:"w"+Math.random().toString(16).slice(2,7),
-            title:titleVal || "Без названия",
-            link:linkVal,
-            desc:descVal,
-            price:priceVal,
-            image:currentImage
-          });
-        }
-        closeOverlay();
-        state.openedListId=listId;
-        renderSection();
-      };
-
-      // закрытие по клику мимо
-      overlay.addEventListener("click",e=>{
-        if(e.target===overlay) closeOverlay();
-      });
-    }
-
-    /* ===== COLOR UTILS (for list gradients) ===== */
-    function hexToHsl(hex){
-      hex=hex.replace('#','');
-      const bigint=parseInt(hex,16);
-      const r=(bigint>>16)&255,g=(bigint>>8)&255,b=bigint&255;
-      const r1=r/255,g1=g/255,b1=b/255;
-      const max=Math.max(r1,g1,b1),min=Math.min(r1,g1,b1);
-      let h,s,l=(max+min)/2;
-      if(max===min){h=s=0;}else{
-        const d=max-min;
-        s=l>0.5?d/(2-max-min):d/(max+min);
-        switch(max){
-          case r1:h=(g1-b1)/d+(g1<b1?6:0);break;
-          case g1:h=(b1-r1)/d+2;break;
-          case b1:h=(r1-g1)/d+4;break;
-        }
-        h/=6;
-      }
-      return {h:Math.round(h*360),s:Math.round(s*100),l:Math.round(l*100)};
-    }
-    function hslToCss(h,s,l){return `hsl(${h} ${s}% ${l}%)`}
-
-    /* ===== CREATE/EDIT LIST ===== */
-    function openCreateListScreen(listObj=null){
-      const overlay=document.createElement("div");
-      overlay.className="create-overlay";
-      let selectedGradient=listObj?(listObj.gradient||DEFAULT_GRADIENT):DEFAULT_GRADIENT;
-      let selectedImage=listObj?listObj.bgImage||null:null;
-      if(selectedImage){overlay.style.backgroundImage=`url(${selectedImage})`;}
-      else{overlay.style.background=selectedGradient;}
-
-      const stack=document.createElement("div");stack.className="create-stack";overlay.appendChild(stack);
-
-      const row=document.createElement("div");row.className="create-gradient-row";stack.appendChild(row);
-
-      // [+] chip: загрузить фон
-      const plus=document.createElement("div");
-      plus.className="chip";
-      plus.innerHTML='<span class="chip-icon">+</span>';
-      row.appendChild(plus);
-
-      // палитра
-      const pal=document.createElement("div");
-      pal.className="chip chip-palette";
-      pal.innerHTML=`<svg viewBox="0 0 24 24" fill="none">
-        <circle cx="7" cy="7" r="2.6" fill="#a88cf0"/><circle cx="12" cy="7" r="2.6" fill="#ef7777"/>
-        <circle cx="17" cy="7" r="2.6" fill="#f0a85a"/><circle cx="7" cy="12" r="2.6" fill="#42d2b0"/>
-        <circle cx="12" cy="12" r="2.6" fill="#7ebbff"/><circle cx="17" cy="12" r="2.6" fill="#d97aa5"/>
-        <circle cx="12" cy="17" r="2.6" fill="#51b458"/>
-      </svg>`;
-      row.appendChild(pal);
-
-      const presetWrap=document.createElement("div");
-      presetWrap.style.display="flex";
-      presetWrap.style.gap="12px";
-      row.appendChild(presetWrap);
-
-      function renderPresets(){
-        presetWrap.innerHTML="";
-        GRADIENTS.forEach(gr=>{
-          const c=document.createElement("div");
-          c.className="color-circle"+(gr===selectedGradient&&!selectedImage?" active":"");
-          c.style.background=gr;
-          c.onclick=()=>{
-            selectedImage=null;
-            overlay.style.backgroundImage="";
-            overlay.style.background=gr;
-            selectedGradient=gr;
-            presetWrap.querySelectorAll(".color-circle").forEach(x=>x.classList.remove("active"));
-            c.classList.add("active");
-          };
-          presetWrap.appendChild(c);
-        });
-      }
-      renderPresets();
-
-      // file input для фона
-      const bgFile=document.createElement("input");
-      bgFile.type="file";
-      bgFile.accept="image/*";
-      bgFile.style.display="none";
-      overlay.appendChild(bgFile);
-
-      function openBgSheet(){
-        const shOverlay=document.createElement("div");
-        shOverlay.className="sheet-overlay";
-        const sh=document.createElement("div");
-        sh.className="sheet";
-        sh.innerHTML=`<div class="sheet-item" id="bgUpload">Загрузить изображение</div>`;
-        shOverlay.appendChild(sh);
-        document.body.appendChild(shOverlay);
-
-        shOverlay.onclick=e=>{
-          if(e.target===shOverlay) shOverlay.remove();
-        };
-        sh.querySelector("#bgUpload").onclick=()=>{
-          bgFile.click();
-          shOverlay.remove();
-        };
-      }
-
-      plus.onclick=openBgSheet;
-
-      bgFile.onchange=e=>{
-        const f=e.target.files[0];
-        if(!f) return;
-        const r=new FileReader();
-        r.onload=ev=>{
-          selectedImage=ev.target.result;
-          overlay.style.backgroundImage=`url(${selectedImage})`;
-          overlay.style.backgroundSize="cover";
-          overlay.style.backgroundPosition="center";
-          presetWrap.querySelectorAll(".color-circle").forEach(x=>x.classList.remove("active"));
-        };
-        r.readAsDataURL(f);
-      };
-
-      // inline-палитра (без доп. модалок)
-      let palettePanel=null;
-      pal.onclick=()=>{
-        if(palettePanel){
-          palettePanel.remove();
-          palettePanel=null;
-          return;
-        }
-        palettePanel=document.createElement("div");
-        palettePanel.className="palette-inline";
-        palettePanel.innerHTML=`
-          <div class="palette-inline-row">
-            <label>Цвет</label>
-            <input type="color" id="palColor" value="#cbac67" style="border:none;background:transparent;width:40px;height:24px;">
-          </div>
-          <div class="palette-inline-row">
-            <label>Угол</label>
-            <input type="range" id="palAngle" min="0" max="180" value="135" style="flex:1;">
-            <span id="palAngleVal">135°</span>
-          </div>
-        `;
-        stack.insertBefore(palettePanel, stack.children[1]);
-
-        const palColor=palettePanel.querySelector("#palColor");
-        const palAngle=palettePanel.querySelector("#palAngle");
-        const palAngleVal=palettePanel.querySelector("#palAngleVal");
-
-        function updateFromPalette(){
-          const hex=palColor.value;
-          const {h,s,l}=hexToHsl(hex);
-          const start=hslToCss(h, Math.min(100, s+5), Math.max(0, l-5));
-          const end=hslToCss(h, Math.max(0, s-20), Math.min(100, l+18));
-          const ang=palAngle.value;
-          palAngleVal.textContent=ang+"°";
-          const gr=`linear-gradient(${ang}deg, ${start} 0%, ${end} 100%)`;
-          selectedImage=null;
-          selectedGradient=gr;
-          overlay.style.backgroundImage="";
-          overlay.style.background=gr;
-          renderPresets();
-        }
-
-        palColor.oninput=updateFromPalette;
-        palAngle.oninput=updateFromPalette;
-        updateFromPalette();
-      };
-
-      // title
-      const input=document.createElement("input");
-      input.className="create-title-input";
-      input.placeholder="Название списка";
-      input.value=listObj?listObj.name||"":"";
-      stack.appendChild(input);
-
-      // actions
-      const actions=document.createElement("div");
-      actions.className="create-actions-row";
-      actions.innerHTML=`
-        <div class="create-icon-big" id="clClose">✕</div>
-        <div class="create-icon-big" id="clSave">✓</div>`;
-      stack.appendChild(actions);
-
-      document.body.appendChild(overlay);
-
-      function saveList(){
-        const title=input.value.trim();
-        if(!title) return;
-        if(listObj){
-          listObj.name=title;
-          listObj.gradient=selectedImage?null:selectedGradient;
-          listObj.bgImage=selectedImage;
-          overlay.remove();
-          state.openedListId=listObj.id;
-          renderSection();
-        }else{
-          const id="l"+Math.random().toString(16).slice(2,7);
-          state.lists.unshift({
-            id,
-            name:title,
-            items:[],
-            gradient:selectedImage?null:selectedGradient,
-            bgImage:selectedImage
-          });
-          overlay.remove();
-          state.openedListId=id;
-          renderSection();
-        }
-      }
-
-      actions.querySelector("#clClose").onclick=()=>overlay.remove();
-      actions.querySelector("#clSave").onclick=saveList;
-      setTimeout(()=>{input.focus();if(listObj) input.select();},50);
-    }
-
-    /* Top "Создать список" */
-    document.getElementById("topAdd").onclick=()=>openCreateListScreen();
-
-    /* Context menu on cards (⋯) */
-    document.addEventListener("click",(e)=>{
-      const old=document.querySelector(".more-menu");
-      if(old && !e.target.closest(".more-menu") && !e.target.closest(".wl-more")) old.remove();
-
-      const moreBtn=e.target.closest(".wl-more");
-      if(moreBtn){
-        const id=moreBtn.dataset.id;
-        const rect=moreBtn.getBoundingClientRect();
-        const menu=document.createElement("div");
-        menu.className="more-menu";
-        const top = rect.bottom + 6 + window.scrollY;
-        const left = rect.right - 210 + window.scrollX;
-        menu.style.top=top+"px";
-        menu.style.left=left+"px";
-        menu.innerHTML=`
-          <div class="more-item" data-act="share" data-id="${id}">Поделиться <span>⤴︎</span></div>
-          <div class="more-item" data-act="edit" data-id="${id}">Редактировать <span>✎</span></div>
-          <div class="more-item danger" data-act="delete" data-id="${id}">Удалить <span>🗑</span></div>
-        `;
-        document.body.appendChild(menu);
-
-        menu.onclick=(ev)=>{
-          const item=ev.target.closest(".more-item");
-          if(!item) return;
-          const act=item.dataset.act;
-          const lid=item.dataset.id;
-          const lst=state.lists.find(l=>l.id===lid);
-          if(!act || !lst) return;
-
-          if(act==="share"){
-            alert("Ссылка: https://t.me/your_bot?list="+lid);
-          }
-          if(act==="edit"){
-            openCreateListScreen(lst);
-          }
-          if(act==="delete"){
-            if(confirm("Удалить список?")){
-              state.lists=state.lists.filter(l=>l.id!==lid);
-              state.openedListId=null;
-              renderSection();
-            }
-          }
-          menu.remove();
-        };
-      }
-    });
-
-    renderTabs();
-    renderSection();
-  </script>
-</body>
-</html>
-Копировать
-Summary
-
-Added a standalone onlywishes.html page that contains the full OnlyWishes prototype with theme-aware styling, list/friend cards, and all supporting layout directly in the file for quick previewing.
-
-Included the original interactive JavaScript so the page supports section switching, wish-list previews, friend views, and the modal editors for wishes and list customization, matching the provided experience.
-
-Testing
-
-⚠️ Not run (not requested)
-
-
-файл (1)
-а ты можешь изменить кое что?
-Копировать
-Мне нужно уточнить, какие именно изменения вы хотите внести. Пожалуйста, расскажите подробнее, что следует изменить или доработать, и я займусь этим.
-
-
-
-
-Разница
-Журналы
-
-onlywishes.html
-Новый
-+1212
--0
-
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
-  <title>OnlyWishes</title>
-  <style>
-    /* ===== THEMES ===== */
-    :root{
-      --bg:#f5f7fb;
-      --text:#111318;
-      --muted:rgba(17,19,24,.55);
-      --chip-bg:rgba(0,0,0,.08);
-      --chip-border:rgba(0,0,0,.06);
-      --btn-ghost:rgba(0,0,0,.08);
-      --btn-ghost-br:rgba(0,0,0,.06);
-      --friend-card:#fff;
-      --friend-sub:rgba(17,19,24,.55);
-      --top-add-bg:#fff; --top-add-text:#000;
-    }
-    [data-theme="dark"]{
-      --bg:#101318;
-      --text:#fff;
-      --muted:rgba(255,255,255,.55);
-      --chip-bg:rgba(255,255,255,.07);
-      --chip-border:rgba(255,255,255,.03);
-      --btn-ghost:rgba(255,255,255,.07);
-      --btn-ghost-br:rgba(255,255,255,.03);
-      --friend-card:rgba(255,255,255,.02);
-      --friend-sub:rgba(255,255,255,.55);
-      --top-add-bg:#fff; --top-add-text:#000;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Wishmakers</title>
+    <style>
+      /* ===== THEMES ===== */
+      :root {
+        --bg: #f5f7fb;
+        --text: #111318;
+        --muted: rgba(17, 19, 24, 0.55);
+        --chip-bg: rgba(0, 0, 0, 0.08);
+        --chip-border: rgba(0, 0, 0, 0.06);
+        --btn-ghost: rgba(0, 0, 0, 0.08);
+        --btn-ghost-br: rgba(0, 0, 0, 0.06);
+        --friend-card: #ffffff;
+        --friend-sub: rgba(17, 19, 24, 0.55);
+        --top-add-bg: #ffffff;
+        --top-add-text: #000000;
+      }
+      [data-theme="dark"] {
+        --bg: #101318;
+        --text: #ffffff;
+        --muted: rgba(255, 255, 255, 0.55);
+        --chip-bg: rgba(255, 255, 255, 0.07);
+        --chip-border: rgba(255, 255, 255, 0.03);
+        --btn-ghost: rgba(255, 255, 255, 0.07);
+        --btn-ghost-br: rgba(255, 255, 255, 0.03);
+        --friend-card: rgba(255, 255, 255, 0.03);
+        --friend-sub: rgba(255, 255, 255, 0.55);
+        --top-add-bg: #ffffff;
+        --top-add-text: #000000;
+      }
 
-    /* ===== BASE ===== */
-    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
-    .screen{padding:12px 18px 110px}
-    .top-line{display:flex;justify-content:flex-end;align-items:center;margin-bottom:6px}
-    .circle-btn{width:40px;height:40px;border-radius:999px;background:var(--chip-bg);border:1px solid var(--chip-border);display:grid;place-items:center;cursor:pointer;font-size:18px;color:var(--text)}
+      /* ===== BASE ===== */
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        min-height: 100vh;
+      }
+      .screen {
+        padding: 12px 18px 110px;
+      }
+      .top-line {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .circle-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        background: var(--chip-bg);
+        border: 1px solid var(--chip-border);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        font-size: 18px;
+        color: var(--text);
+      }
 
-    .avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:10px}
-    .avatar{width:88px;height:88px;border-radius:999px;background:linear-gradient(140deg,#ffb347 0%,#ff7751 100%);display:grid;place-items:center;font-weight:650;font-size:26px;overflow:hidden;color:#fff}
-    .name{font-size:19px;font-weight:650}
-    .subline{font-size:13px;color:var(--muted)}
+      .avatar-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .avatar {
+        width: 88px;
+        height: 88px;
+        border-radius: 999px;
+        background: linear-gradient(140deg, #ffb347 0%, #ff7751 100%);
+        display: grid;
+        place-items: center;
+        font-weight: 650;
+        font-size: 26px;
+        overflow: hidden;
+        color: #ffffff;
+      }
+      .name {
+        font-size: 19px;
+        font-weight: 650;
+      }
+      .subline {
+        font-size: 13px;
+        color: var(--muted);
+      }
 
-    .top-add{margin:10px auto 12px;background:var(--top-add-bg);color:var(--top-add-text);border-radius:999px;height:42px;min-width:210px;display:flex;justify-content:center;align-items:center;gap:8px;font-weight:500;font-size:15px;cursor:pointer;max-width:620px}
+      .top-add {
+        margin: 10px auto 12px;
+        background: var(--top-add-bg);
+        color: var(--top-add-text);
+        border-radius: 999px;
+        height: 42px;
+        min-width: 210px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        font-size: 15px;
+        cursor: pointer;
+        max-width: 620px;
+      }
 
-    .tabs{display:flex;gap:10px;margin:10px auto 12px;justify-content:flex-start;max-width:620px}
-    .tab{font-size:15px;color:var(--muted);cursor:pointer}
-    .tab.active{color:var(--text);font-weight:550}
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin: 10px auto 12px;
+        justify-content: flex-start;
+        max-width: 620px;
+      }
+      .tab {
+        font-size: 15px;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .tab.active {
+        color: var(--text);
+        font-weight: 550;
+      }
 
-    /* ===== LIST CARD ===== */
-    .wl-card{position:relative;border-radius:22px;padding:14px 14px 12px;margin-bottom:12px;max-width:620px;margin-inline:auto;display:flex;gap:14px;overflow:hidden;background-size:cover;background-position:center}
-    .wl-card::before{content:"";width:4px;border-radius:999px;background:linear-gradient(180deg,rgba(255,179,71,.9) 0%,rgba(255,119,81,.9) 100%);align-self:stretch;position:relative;z-index:2}
-    .wl-content{flex:1;position:relative;z-index:3}
-    .wl-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-    .wl-title{font-size:18px;font-weight:650;color:#fff}
-    .wl-sub{font-size:13px;color:rgba(255,255,255,.78)}
-    .wl-more{width:30px;height:30px;border-radius:999px;background:rgba(0,0,0,.25);display:grid;place-items:center;font-size:18px;cursor:pointer;color:#fff}
-    .wl-bottom{display:flex;gap:8px;margin-top:10px;align-items:center}
-    .tile-plus,.tile-ghost,.tile-img{width:48px;height:48px;border-radius:999px}
-    .tile-plus{background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:24px;cursor:pointer;color:#fff}
-    .tile-ghost,.tile-img{background:rgba(255,255,255,.08);display:grid;place-items:center;overflow:hidden}
-    .tile-img img{width:100%;height:100%;object-fit:cover}
+      /* ===== LIST CARD (главный экран) ===== */
+      .wl-card {
+        position: relative;
+        border-radius: 22px;
+        padding: 14px 14px 12px;
+        margin-bottom: 12px;
+        max-width: 620px;
+        margin-inline: auto;
+        display: flex;
+        gap: 14px;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+      }
+      .wl-card::before {
+        content: "";
+        width: 4px;
+        border-radius: 999px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 179, 71, 0.9) 0%,
+          rgba(255, 119, 81, 0.9) 100%
+        );
+        align-self: stretch;
+        position: relative;
+        z-index: 2;
+      }
+      .wl-content {
+        flex: 1;
+        position: relative;
+        z-index: 3;
+      }
+      .wl-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .wl-title {
+        font-size: 18px;
+        font-weight: 650;
+        color: #ffffff;
+      }
+      .wl-sub {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+      .wl-more {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.25);
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        cursor: pointer;
+        color: #ffffff;
+      }
+      .wl-bottom {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        align-items: center;
+      }
+      .tile-plus,
+      .tile-ghost,
+      .tile-img {
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+      }
+      .tile-plus {
+        background: rgba(255, 255, 255, 0.16);
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+        cursor: pointer;
+        color: #ffffff;
+      }
+      .tile-ghost,
+      .tile-img {
+        background: rgba(255, 255, 255, 0.08);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      .tile-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
 
-    /* ===== FRIEND CARD ===== */
-    .friend-card{position:relative;border-radius:22px;padding:14px 14px 12px;margin-bottom:12px;max-width:620px;margin-inline:auto;display:flex;gap:14px;overflow:hidden;background:var(--friend-card)}
-    .friend-card::before{content:"";width:4px;border-radius:999px;background:linear-gradient(180deg,rgba(255,179,71,.9) 0%,rgba(255,119,81,.9) 100%);align-self:stretch;position:relative;z-index:2}
-    .friend-content{flex:1;position:relative;z-index:3}
-    .friend-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .friend-head{display:flex;align-items:center;gap:10px}
-    .friend-ava{width:36px;height:36px;border-radius:999px;overflow:hidden;background:rgba(0,0,0,.06);display:grid;place-items:center;font-weight:700;color:#fff}
-    .friend-ava img{width:100%;height:100%;object-fit:cover}
-    .friend-title{font-size:16px;font-weight:650;color:var(--text)}
-    .friend-sub{font-size:12px;color:var(--friend-sub);margin-top:2px}
-    .friends-bottom-btn{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:var(--btn-ghost);border:1px solid var(--btn-ghost-br);border-radius:999px;height:38px;padding:0 20px;display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;backdrop-filter:blur(6px);color:var(--text)}
+      /* ===== FRIEND CARD ===== */
+      .friend-card {
+        position: relative;
+        border-radius: 22px;
+        padding: 14px 14px 12px;
+        margin-bottom: 12px;
+        max-width: 620px;
+        margin-inline: auto;
+        display: flex;
+        gap: 14px;
+        overflow: hidden;
+        background: var(--friend-card);
+      }
+      .friend-card::before {
+        content: "";
+        width: 4px;
+        border-radius: 999px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 179, 71, 0.9) 0%,
+          rgba(255, 119, 81, 0.9) 100%
+        );
+        align-self: stretch;
+        position: relative;
+        z-index: 2;
+      }
+      .friend-content {
+        flex: 1;
+        position: relative;
+        z-index: 3;
+      }
+      .friend-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .friend-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .friend-ava {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.06);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .friend-ava img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .friend-title {
+        font-size: 16px;
+        font-weight: 650;
+        color: var(--text);
+      }
+      .friend-sub {
+        font-size: 12px;
+        color: var(--friend-sub);
+        margin-top: 2px;
+      }
+      .friends-bottom-btn {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 16px;
+        background: var(--btn-ghost);
+        border: 1px solid var(--btn-ghost-br);
+        border-radius: 999px;
+        height: 38px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        color: var(--text);
+      }
 
-    /* ===== LIST VIEW (grid) ===== */
-    .list-view{
-      position:fixed;
-      inset:0;
-      z-index:900;
-      background:#101318;
-      background-size:cover;
-      background-position:center;
-      padding:14px 16px 110px;
-      overflow-y:auto;
-    }
-    .list-view-content{position:relative;z-index:2}
-    .list-view-top{display:flex;justify-content:space-between;align-items:center}
-    .list-view-title{text-align:center;font-size:26px;font-weight:700;margin-top:10px;color:#fff}
-    .wish-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(146px,1fr));gap:12px;margin-top:18px}
+      /* ===== LIST VIEW (grid) ===== */
+      .list-view {
+        position: fixed;
+        inset: 0;
+        z-index: 900;
+        background-size: cover;
+        background-position: center;
+        padding: 14px 16px 110px;
+        overflow-y: auto;
+      }
+      /* убран тёмный градиент-подложка */
+      /* .list-view::before { ... } — удалено */
 
-    /* Плашка желания */
-    .wish-box{
-      position:relative;
-      border-radius:20px;
-      overflow:hidden;
-      min-height:150px;
-      background:#2a2d33;
-      cursor:pointer;
-    }
-    .wish-box-img{
-      position:absolute;
-      inset:0;
-      background:#454950;
-      background-size:cover;
-      background-position:center;
-    }
-    .wish-box-body{
-      position:absolute;
-      left:0;right:0;bottom:0;
-      padding:8px 10px 10px;
-      background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.86));
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .wish-box-title{
-      font-size:12.5px;
-      font-weight:600;
-      color:#ffffff;
-      line-height:1.15;
-    }
-    .wish-box-sub{
-      font-size:11px;
-      color:rgba(255,255,255,.7);
-      margin-top:2px;
-    }
-    .wish-box-price{
-      font-size:13px;
-      font-weight:700;
-      color:#7CFC9A;
-      margin-top:2px;
-    }
+      .list-view-content {
+        position: relative;
+        z-index: 2;
+      }
+      .list-view-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .list-view-title {
+        text-align: center;
+        font-size: 26px;
+        font-weight: 700;
+        margin-top: 10px;
+        color: #ffffff;
+      }
+      .wish-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+        padding: 0 12px 40px;
+        box-sizing: border-box;
+      }
 
-    /* ===== BOTTOM ACTIONS (list view) ===== */
-    .list-bottom-row{
-      position:fixed;
-      left:50%;
-      transform:translateX(-50%);
-      bottom:18px;
-      display:flex;
-      gap:14px;
-      z-index:20;
-    }
-    .lb-round{
-      width:54px;
-      height:54px;
-      border-radius:999px;
-      background:#fff;
-      color:#000;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:24px;
-      cursor:pointer;
-      box-shadow:0 8px 24px rgba(0,0,0,.35);
-    }
+      /* ===== ПЛАШКА ЖЕЛАНИЯ – НОВЫЙ ДИЗАЙН ===== */
+      .wish-box {
+        position: relative;
+        border-radius: 18px;
+        overflow: hidden;
+        width: 100%;
+        background: #f5f7fb;
+        cursor: pointer;
+        border: 1px solid rgba(15, 23, 42, 0.06);
+        display: flex;
+        flex-direction: column;
+        padding: 12px 12px 14px;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+      }
+      [data-theme="dark"] .wish-box {
+        background: #111318;
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+      }
 
-    /* ===== CREATE / EDIT LIST ===== */
-    .create-overlay{position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#101318;background-size:cover;background-position:center}
-    .create-stack{display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;transform:translateY(-24px)}
-    .create-gradient-row{display:flex;gap:12px;align-items:center;justify-content:flex-start;max-width:92vw;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 4px 10px}
-    .create-gradient-row::-webkit-scrollbar{display:none}
-    .chip,.color-circle{flex:0 0 auto;width:40px;height:40px;border-radius:999px;display:grid;place-items:center;cursor:pointer;user-select:none;box-sizing:border-box}
-    .chip{background:#fff;color:#000;border:2px solid #fff}
-    .chip-icon{font-size:20px}
-    .chip-palette{background:#fff;border:2px solid #fff}
-    .chip-palette svg{width:20px;height:20px;display:block}
-    .color-circle{border:2px solid #fff}
-    .color-circle.active{outline:3px solid #fff; outline-offset:0}
+      .wish-box-img {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        border-radius: 14px;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      .wish-box-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+      }
 
-    .create-title-input{font-size:26px;font-weight:700;border:none;outline:none;background:transparent;text-align:center;color:#fff}
-    .create-actions-row{display:flex;gap:16px;justify-content:center}
-    .create-icon-big{width:60px;height:60px;border-radius:999px;background:rgba(255,255,255,.95);display:grid;place-items:center;cursor:pointer;font-size:22px;color:#000;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+      .wish-box-body {
+        padding: 0;
+        background: transparent;
+        flex-shrink: 0;
+      }
+      .wish-box-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #111318;
+        line-height: 1.3;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 100%;
+      }
+      [data-theme="dark"] .wish-box-title {
+        color: #ffffff;
+      }
+      .wish-box-sub {
+        font-size: 12px;
+        color: #6b7280;
+        text-align: center;
+        line-height: 1.2;
+      }
+      [data-theme="dark"] .wish-box-sub {
+        color: #9ca3af;
+      }
+      .wish-box-price {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        text-align: center;
+        line-height: 1.2;
+        margin-top: 2px;
+      }
+      [data-theme="dark"] .wish-box-price {
+        color: #d1d5db;
+      }
 
-    /* Inline palette panel */
-    .palette-inline{
-      margin-top:8px;
-      background:rgba(0,0,0,.38);
-      border-radius:14px;
-      padding:8px 10px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      color:#fff;
-      font-size:12px;
-    }
-    .palette-inline-row{display:flex;align-items:center;gap:8px}
-    .palette-inline-row label{opacity:.75}
+      /* ===== BOTTOM ACTIONS (list view) ===== */
+      .list-bottom-row {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 18px;
+        display: flex;
+        gap: 14px;
+        z-index: 20;
+      }
+      .lb-round {
+        width: 54px;
+        height: 54px;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #000000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      }
 
-    /* Bottom sheet (upload background) */
-    .sheet-overlay{position:fixed;inset:0;z-index:6000}
-    .sheet{position:absolute;left:0;right:0;bottom:0;background:rgba(20,22,26,.98);border-radius:18px 18px 0 0;padding:14px 14px 18px;color:#fff}
-    .sheet-item{padding:12px 8px;border-radius:12px;background:rgba(255,255,255,.06);margin-bottom:8px;text-align:center;cursor:pointer}
+      /* ===== CREATE / EDIT LIST ===== */
+      .create-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 5000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-size: cover;
+        background-position: center;
+      }
 
-    /* ===== WISH BOTTOM SHEET ===== */
-    .wish-overlay{
-      position:fixed;
-      inset:0;
-      z-index:4000;
-      background:rgba(0,0,0,.55);
-      display:flex;
-      justify-content:center;
-      align-items:stretch;
-    }
-    .wish-sheet{
-      width:100%;
-      max-width:640px;
-      height:100vh;
-      max-height:100vh;
-      background:linear-gradient(160deg,#161920 0%,#07090d 100%);
-      border-radius:18px 18px 0 0;
-      border:1px solid rgba(255,255,255,.06);
-      padding:10px 16px 14px;
-      box-shadow:0 -14px 30px rgba(0,0,0,.7);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      color:#fff;
-      transform:translateY(0);
-      touch-action:none;
-      margin:0 auto;
-    }
-    .wish-drag{
-      width:44px;
-      height:4px;
-      border-radius:999px;
-      background:rgba(255,255,255,.28);
-      margin:4px auto 2px;
-    }
-    .wish-sheet-scroll{
-      overflow-y:auto;
-      padding-top:4px;
-      padding-bottom:8px;
-      max-height:calc(100vh - 90px);
-    }
+      .create-stack {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(-24px);
+      }
+      .create-gradient-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-start;
+        max-width: 92vw;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 6px 4px 10px;
+      }
+      .create-gradient-row::-webkit-scrollbar {
+        display: none;
+      }
+      .chip,
+      .color-circle {
+        flex: 0 0 auto;
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        user-select: none;
+        box-sizing: border-box;
+      }
+      .chip {
+        background: #ffffff;
+        color: #000000;
+        border: 2px solid #ffffff;
+      }
+      .chip-icon {
+        font-size: 20px;
+      }
+      .chip-palette {
+        background: #ffffff;
+        border: 2px solid #ffffff;
+      }
+      .chip-palette svg {
+        width: 20px;
+        height: 20px;
+        display: block;
+      }
+      .color-circle {
+        border: 2px solid #ffffff;
+      }
+      .color-circle.active {
+        outline: 3px solid #ffffff;
+      }
 
-    .wish-title-row{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:6px;
-    }
-    .wish-heading{
-      font-size:15px;
-      font-weight:600;
-      opacity:.9;
-    }
+      .create-title-input {
+        font-size: 26px;
+        font-weight: 700;
+        border: none;
+        outline: none;
+        background: transparent;
+        text-align: center;
+        color: #ffffff;
+      }
+      .create-actions-row {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+      }
+      .create-icon-big {
+        width: 60px;
+        height: 60px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        font-size: 22px;
+        color: #000000;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
 
-    .wish-input-block{
-      background:rgba(255,255,255,.03);
-      border-radius:14px;
-      padding:8px 10px;
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      margin-bottom:8px;
-    }
-    .wish-label{
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:.03em;
-      opacity:.55;
-    }
-    .wish-input{
-      background:transparent;
-      border:none;
-      outline:none;
-      color:#fff;
-      font-size:14px;
-      width:100%;
-    }
-    .wish-input::placeholder{color:rgba(255,255,255,.35);}
+      /* Inline palette panel */
+      .palette-inline {
+        margin-top: 8px;
+        background: rgba(0, 0, 0, 0.38);
+        border-radius: 14px;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        color: #ffffff;
+        font-size: 12px;
+      }
+      .palette-inline-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .palette-inline-row label {
+        opacity: 0.75;
+      }
 
-    .wish-img-row{
-      display:flex;
-      gap:10px;
-      margin-top:4px;
-      overflow-x:auto;
-      padding-bottom:4px;
-    }
-    .wish-img-row::-webkit-scrollbar{display:none}
-    .wish-img-tile{
-      flex:0 0 auto;
-      width:64px;
-      height:64px;
-      border-radius:14px;
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-      box-sizing:border-box;
-      border:2px solid rgba(255,255,255,.15);
-      background:#252831;
-      background-size:cover;
-      background-position:center;
-      color:#fff;
-      font-size:24px;
-    }
-    .wish-img-tile.active{
-      border-color:#ffffff;
-      box-shadow:0 0 0 2px rgba(255,255,255,.25);
-    }
+      /* Bottom sheet (upload background) */
+      .sheet-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 6000;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .sheet {
+        width: 100%;
+        max-width: 640px;
+        background: #101318;
+        border-radius: 18px 18px 0 0;
+        padding: 14px 14px 18px;
+        color: #ffffff;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+      }
+      .sheet-item {
+        padding: 12px 8px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        margin-bottom: 8px;
+        text-align: center;
+        cursor: pointer;
+      }
 
-    .wish-bottom-actions{
-      margin-top:4px;
-      display:flex;
-      justify-content:center;
-      gap:18px;
-      padding-bottom:4px;
-    }
-    .wish-round-big{
-      width:60px;
-      height:60px;
-      border-radius:999px;
-      background:#fff;
-      color:#000;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:24px;
-      cursor:pointer;
-      box-shadow:0 10px 30px rgba(0,0,0,.6);
-    }
+      /* ===== WISH BOTTOM SHEET EDITOR ===== */
+      .wish-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 4000;
+        /* убрали тёмную подложку */
+        background: transparent;
+        display: flex;
+        justify-content: center;
+        align-items: stretch;
+      }
+      .wish-sheet {
+        width: 100%;
+        max-width: 640px;
+        height: 100vh;
+        max-height: 100vh;
+        background: linear-gradient(160deg, #161920 0%, #07090d 100%);
+        border-radius: 18px 18px 0 0;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 10px 16px 14px;
+        box-shadow: 0 -14px 30px rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        color: #ffffff;
+        transform: translateY(0);
+        touch-action: none;
+        margin: 0 auto;
+      }
+      .wish-drag {
+        width: 44px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.28);
+        margin: 4px auto 2px;
+      }
+      .wish-sheet-scroll {
+        overflow-y: auto;
+        padding-top: 4px;
+        padding-bottom: 8px;
+        max-height: calc(100vh - 90px);
+      }
 
-    .wish-clip-btn{
-      border:none;
-      border-radius:999px;
-      padding:6px 10px;
-      font-size:11px;
-      background:rgba(255,255,255,.12);
-      color:#fff;
-      cursor:pointer;
-      white-space:nowrap;
-    }
-    .wish-clip-btn:active{transform:scale(.97);}
+      .wish-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+      .wish-heading {
+        font-size: 15px;
+        font-weight: 600;
+        opacity: 0.9;
+      }
 
-    /* menus */
-    .more-menu{position:fixed;background:#121419;border-radius:16px;overflow:hidden;min-width:210px;z-index:3000;border:1px solid rgba(255,255,255,.03);color:#fff}
-    .more-item{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:14px;gap:6px;cursor:pointer}
-    .more-item:not(:last-child){border-bottom:1px solid rgba(255,255,255,.08)}
-    .more-item.danger{color:#ff6b6b}
-  </style>
-</head>
-<body data-theme="light">
-  <div class="screen" id="app">
-    <div class="top-line">
-      <div class="circle-btn" id="themeToggle" title="Тема">☾</div>
+      .wish-input-block {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 14px;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+      .wish-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        opacity: 0.55;
+      }
+      .wish-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #ffffff;
+        font-size: 14px;
+        width: 100%;
+      }
+      .wish-input::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+      }
+
+      .wish-img-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 4px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+      .wish-img-row::-webkit-scrollbar {
+        display: none;
+      }
+      .wish-img-tile {
+        flex: 0 0 auto;
+        width: 64px;
+        height: 64px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        box-sizing: border-box;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        background: #252831;
+        background-size: cover;
+        background-position: center;
+        color: #ffffff;
+        font-size: 24px;
+      }
+      .wish-img-tile.active {
+        border-color: #ffffff;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+      }
+
+      .wish-bottom-actions {
+        margin-top: 4px;
+        display: flex;
+        justify-content: center;
+        gap: 18px;
+        padding-bottom: 4px;
+      }
+      .wish-round-big {
+        width: 60px;
+        height: 60px;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #000000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      }
+
+      .wish-clip-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 11px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .wish-clip-btn:active {
+        transform: scale(0.97);
+      }
+
+      /* ===== UNIVERSAL BOTTOM SHEET (share, действия и т.п.) ===== */
+      .bottom-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 4500;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        animation: overlayFade 0.2s ease-out;
+      }
+      @keyframes overlayFade {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .bottom-sheet {
+        width: 100%;
+        max-width: 640px;
+        background: #101318;
+        border-radius: 24px 24px 0 0;
+        padding: 20px 18px 26px;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
+        color: #ffffff;
+        animation: slideUp 0.22s cubic-bezier(0.25, 0.6, 0.3, 1);
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(100%);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+      .bs-title {
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+      .bs-item {
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 15px;
+        cursor: pointer;
+      }
+      .bs-item:last-child {
+        border-bottom: none;
+      }
+      .bs-item.danger {
+        color: #ff6b6b;
+      }
+      .bs-toggle-wrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        gap: 12px;
+      }
+      .bs-toggle {
+        width: 52px;
+        height: 28px;
+        background: #404040;
+        border-radius: 28px;
+        position: relative;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .bs-toggle.active {
+        background: #4c8bfd;
+      }
+      .bs-toggle-thumb {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 22px;
+        height: 22px;
+        background: #ffffff;
+        border-radius: 50%;
+        transition: 0.2s;
+      }
+      .bs-toggle.active .bs-toggle-thumb {
+        left: 27px;
+      }
+      .bs-link-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #171821;
+        border-radius: 12px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        font-size: 13px;
+      }
+      .bs-link-text {
+        flex: 1;
+        word-break: break-all;
+        opacity: 0.9;
+      }
+      .bs-link-copy {
+        border: none;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        background: #2f6bff;
+        color: #ffffff;
+        cursor: pointer;
+      }
+      .bs-team-row {
+        background: #171821;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 13px;
+        opacity: 0.85;
+      }
+
+      /* ===== WISH DETAIL BOTTOM SHEET ===== */
+      .wish-detail-sheet {
+        width: 100%;
+        max-width: 640px;
+        background: var(--friend-card);
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+        animation: slideUp 0.22s cubic-bezier(0.25, 0.6, 0.3, 1);
+      }
+      .wish-detail-top {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 12px 14px;
+      }
+      .wd-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        background: var(--chip-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 18px;
+        color: var(--text);
+      }
+      .wish-detail-image {
+        width: 100%;
+        max-height: 260px;
+        background: #000000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .wish-detail-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+      }
+      .wish-detail-content {
+        padding: 18px 18px 10px;
+      }
+      .wish-detail-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 10px;
+        line-height: 1.3;
+      }
+      .wish-detail-title a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .wish-detail-price {
+        font-size: 18px;
+        font-weight: 600;
+        color: #007aff;
+        margin-bottom: 12px;
+      }
+      .wish-detail-actions {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        padding: 0 18px 18px;
+      }
+      .wd-round {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        background: var(--chip-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body data-theme="light">
+    <div class="screen" id="app">
+      <div class="top-line">
+        <div class="circle-btn" id="themeToggle" title="Тема">☾</div>
+      </div>
+
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatarInitials">IP</div>
+        <div class="name" id="profileName">Илья Пономарёв</div>
+        <div class="subline" id="profileStats">—</div>
+      </div>
+
+      <div class="top-add" id="topAdd">
+        <span style="font-size: 20px">+</span> Создать список
+      </div>
+
+      <div class="tabs" id="tabs"></div>
+      <div id="content"></div>
     </div>
 
-    <div class="avatar-wrap">
-      <div class="avatar" id="avatarInitials">IP</div>
-      <div class="name" id="profileName">Илья Пономарёв</div>
-      <div class="subline" id="profileStats">—</div>
-    </div>
+    <script>
+      /* GRADIENTS */
+      const GRADIENTS = [
+        "linear-gradient(135deg,#c084fc 0%,#8ec5fc 100%)",
+        "linear-gradient(135deg,#ff9a9e 0%,#fecfef 100%)",
+        "linear-gradient(135deg,#5ee7df 0%,#b490ca 100%)",
+        "linear-gradient(135deg,#f6d365 0%,#fda085 100%)",
+        "linear-gradient(135deg,#0b3d2e 0%, #0f7b5c 100%)",
+      ];
+      const DEFAULT_GRADIENT = GRADIENTS[0];
 
-    <div class="top-add" id="topAdd"><span style="font-size:20px;">+</span> Создать список</div>
+      /* STATE */
+      const state = {
+        sections: [
+          { id: "lists", name: "Списки" },
+          { id: "friends", name: "Друзья" },
+        ],
+        currentSection: "lists",
+        lists: [
+          {
+            id: "l1",
+            name: "Мои желания",
+            items: [
+              {
+                id: "w1",
+                title: "VR-шлем",
+                link: "https://example.com/vr",
+                image: "https://picsum.photos/300/200?vr",
+                price: "38 500 ₽",
+                desc: "",
+              },
+              {
+                id: "w2",
+                title: "Кроссовки",
+                link: "https://example.com/sneaker",
+                image: "https://picsum.photos/300/200?sneaker",
+                price: "8 700 ₽",
+                desc: "",
+              },
+            ],
+            gradient: DEFAULT_GRADIENT,
+            bgImage: null,
+            isPublic: true,
+          },
+          {
+            id: "l2",
+            name: "День рождения",
+            items: [],
+            gradient: GRADIENTS[3],
+            bgImage: null,
+            isPublic: true,
+          },
+        ],
+        friends: [
+          {
+            id: "f1",
+            name: "Марина Иванова",
+            tg: "marina",
+            photo: "https://i.pravatar.cc/100?img=47",
+          },
+          {
+            id: "f2",
+            name: "Андрей",
+            tg: "andrew",
+            photo: "https://i.pravatar.cc/100?img=12",
+          },
+        ],
+        friendLists: {
+          f1: [
+            {
+              id: "f1l1",
+              name: "Подарки Марине",
+              items: [
+                {
+                  id: "fw1",
+                  title: "Аромасвечи",
+                  image: "https://picsum.photos/300/200?candle",
+                  price: "1 200 ₽",
+                  desc: "",
+                },
+              ],
+              gradient: GRADIENTS[0],
+              bgImage: null,
+            },
+          ],
+          f2: [
+            {
+              id: "f2l1",
+              name: "Гаджеты",
+              items: [
+                {
+                  id: "f2w1",
+                  title: "Квадрокоптер",
+                  image: "https://picsum.photos/300/200?drone",
+                  price: "27 000 ₽",
+                  desc: "",
+                },
+              ],
+              gradient: GRADIENTS[2],
+              bgImage: null,
+            },
+          ],
+        },
+        openedListId: null,
+        openedFriendId: null,
+        theme: localStorage.getItem("ow-theme") || "light",
+      };
 
-    <div class="tabs" id="tabs"></div>
-    <div id="content"></div>
-  </div>
-
-  <script>
-    /* GRADIENTS (1,2,3,5 + dark green) */
-    const GRADIENTS=[
-      "linear-gradient(135deg,#c084fc 0%,#8ec5fc 100%)",
-      "linear-gradient(135deg,#ff9a9e 0%,#fecfef 100%)",
-      "linear-gradient(135deg,#5ee7df 0%,#b490ca 100%)",
-      "linear-gradient(135deg,#f6d365 0%,#fda085 100%)",
-      "linear-gradient(135deg,#0b3d2e 0%, #0f7b5c 100%)"
-    ];
-    const DEFAULT_GRADIENT=GRADIENTS[0];
-
-    /* STATE */
-    const state={
-      sections:[{id:"lists",name:"Списки"},{id:"friends",name:"Друзья"}],
-      currentSection:"lists",
-      lists:[
-        {id:"l1",name:"Мои желания",items:[
-          {id:"w1",title:"VR-шлем",link:"#",image:"https://picsum.photos/300/200?vr",price:"38 500 ₽",desc:""},
-          {id:"w2",title:"Кроссовки",link:"#",image:"https://picsum.photos/300/200?sneaker",price:"8 700 ₽",desc:""},
-        ],gradient:DEFAULT_GRADIENT},
-        {id:"l2",name:"День рождения",items:[],gradient:GRADIENTS[3]},
-      ],
-      friends:[
-        {id:"f1",name:"Марина Иванова",tg:"marina",photo:"https://i.pravatar.cc/100?img=47"},
-        {id:"f2",name:"Андрей",tg:"andrew",photo:"https://i.pravatar.cc/100?img=12"},
-      ],
-      friendLists:{
-        f1:[{id:"f1l1",name:"Подарки Марине",items:[{id:"fw1",title:"Аромасвечи",image:"https://picsum.photos/300/200?candle",price:"1 200 ₽",desc:""}],gradient:GRADIENTS[0]}],
-        f2:[{id:"f2l1",name:"Гаджеты",items:[{id:"f2w1",title:"Квадрокоптер",image:"https://picsum.photos/300/200?drone",price:"27 000 ₽",desc:""}],gradient:GRADIENTS[2]}],
-      },
-      openedListId:null,openedFriendId:null,
-      theme: localStorage.getItem("ow-theme") || "light",
-    };
-
-    /* THEME APPLY + TOGGLE */
-    function applyTheme(t){
-      document.body.setAttribute("data-theme",t);
-      const btn=document.getElementById("themeToggle");
-      btn.textContent = t==="dark" ? "☀︎" : "☾";
-      localStorage.setItem("ow-theme",t);
-    }
-    document.getElementById("themeToggle").onclick=()=>{
-      state.theme = (state.theme==="dark"?"light":"dark");
+      /* THEME APPLY + TOGGLE */
+      function applyTheme(t) {
+        document.body.setAttribute("data-theme", t);
+        const btn = document.getElementById("themeToggle");
+        btn.textContent = t === "dark" ? "☀︎" : "☾";
+        localStorage.setItem("ow-theme", t);
+      }
+      document.getElementById("themeToggle").onclick = () => {
+        state.theme = state.theme === "dark" ? "light" : "dark";
+        applyTheme(state.theme);
+      };
       applyTheme(state.theme);
-    };
-    applyTheme(state.theme);
 
-    /* UI HELPERS */
-    const tabsEl=document.getElementById("tabs");
-    const contentEl=document.getElementById("content");
-    function decl(n,forms){const m=Math.abs(n)%100;const n1=m%10;if(m>10&&m<20)return forms[2];if(n1>1&&n1<5)return forms[1];if(n1===1)return forms[0];return forms[2];}
+      /* UI HELPERS */
+      const tabsEl = document.getElementById("tabs");
+      const contentEl = document.getElementById("content");
 
-    /* TABS */
-    function renderTabs(){
-      tabsEl.innerHTML="";
-      state.sections.forEach(s=>{
-        const el=document.createElement("div");
-        el.className="tab"+(state.currentSection===s.id?" active":"");
-        el.textContent=s.name;
-        el.onclick=()=>{state.currentSection=s.id;state.openedListId=null;state.openedFriendId=null;renderTabs();renderSection();};
-        tabsEl.appendChild(el);
-      });
-    }
+      function decl(n, forms) {
+        const m = Math.abs(n) % 100;
+        const n1 = m % 10;
+        if (m > 10 && m < 20) return forms[2];
+        if (n1 > 1 && n1 < 5) return forms[1];
+        if (n1 === 1) return forms[0];
+        return forms[2];
+      }
 
-    /* SECTIONS */
-    function renderSection(){
-      const totalLists=state.lists.length;
-      const totalWishes=state.lists.reduce((sum,l)=>sum+(l.items?l.items.length:0),0);
-      document.querySelector("#profileStats").textContent=
-        `${totalLists} ${decl(totalLists,["список","списка","списков"])}, `+
-        `${totalWishes} ${decl(totalWishes,["желание","желания","желаний"])} `;
+      /* UNIVERSAL BOTTOM SHEET */
+      function openBottomSheet(innerHTML) {
+        const overlay = document.createElement("div");
+        overlay.className = "bottom-overlay";
 
-      if(state.openedListId){renderListView(state.openedListId,false);return;}
-      if(state.openedFriendId){renderFriendLists(state.openedFriendId);return;}
-      if(state.currentSection==="lists") renderLists(); else renderFriends();
-    }
+        const sheet = document.createElement("div");
+        sheet.className = "bottom-sheet";
+        sheet.innerHTML = innerHTML;
 
-    function renderLists(){
-      contentEl.innerHTML="";
-      state.lists.forEach(lst=>{
-        const card=document.createElement("div");
-        card.className="wl-card";
-        if(lst.bgImage) card.style.backgroundImage=`url(${lst.bgImage})`;
-        else if(lst.gradient) card.style.background=lst.gradient;
-        const c=(lst.items||[]).length;
-        card.innerHTML=`
+        overlay.appendChild(sheet);
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) overlay.remove();
+        });
+
+        return overlay;
+      }
+
+      /* TABS */
+      function renderTabs() {
+        tabsEl.innerHTML = "";
+        state.sections.forEach((s) => {
+          const el = document.createElement("div");
+          el.className =
+            "tab" + (state.currentSection === s.id ? " active" : "");
+          el.textContent = s.name;
+          el.onclick = () => {
+            state.currentSection = s.id;
+            state.openedListId = null;
+            state.openedFriendId = null;
+            renderTabs();
+            renderSection();
+          };
+          tabsEl.appendChild(el);
+        });
+      }
+
+      /* SECTIONS */
+      function renderSection() {
+        const totalLists = state.lists.length;
+        const totalWishes = state.lists.reduce(
+          (sum, l) => sum + (l.items ? l.items.length : 0),
+          0
+        );
+        document.querySelector("#profileStats").textContent =
+          `${totalLists} ${decl(totalLists, [
+            "список",
+            "списка",
+            "списков",
+          ])}, ` +
+          `${totalWishes} ${decl(totalWishes, [
+            "желание",
+            "желания",
+            "желаний",
+          ])}`;
+
+        if (state.openedListId) {
+          renderListView(state.openedListId, false);
+          return;
+        }
+        if (state.openedFriendId) {
+          renderFriendLists(state.openedFriendId);
+          return;
+        }
+        if (state.currentSection === "lists") renderLists();
+        else renderFriends();
+      }
+
+      function renderLists() {
+        contentEl.innerHTML = "";
+        state.lists.forEach((lst) => {
+          const card = document.createElement("div");
+          card.className = "wl-card";
+          if (lst.bgImage) card.style.backgroundImage = `url(${lst.bgImage})`;
+          else if (lst.gradient) card.style.background = lst.gradient;
+          const c = (lst.items || []).length;
+          card.innerHTML = `
           <div class="wl-content">
             <div class="wl-top">
               <div>
                 <div class="wl-title">${lst.name}</div>
-                <div class="wl-sub">${c?`${c} ${decl(c,["желание","желания","желаний"]) } ›`:"Пока нет желаний ›"}</div>
+                <div class="wl-sub">${
+                  c
+                    ? `${c} ${decl(c, ["желание", "желания", "желаний"])} ›`
+                    : "Пока нет желаний ›"
+                }</div>
               </div>
               <div class="wl-more" data-id="${lst.id}">⋯</div>
             </div>
@@ -1715,617 +1194,1017 @@ onlywishes.html
               ${renderPreviewTiles(lst)}
             </div>
           </div>`;
-        card.addEventListener("click",(e)=>{
-          if(e.target.closest("[data-addwish]")){openWishEditor({listId:lst.id});return;}
-          if(e.target.closest(".wl-more")) return;
-          state.openedListId=lst.id;renderSection();
+          card.addEventListener("click", (e) => {
+            if (e.target.closest("[data-addwish]")) {
+              openWishEditor({ listId: lst.id });
+              return;
+            }
+            if (e.target.closest(".wl-more")) return;
+            state.openedListId = lst.id;
+            renderSection();
+          });
+          contentEl.appendChild(card);
         });
-        contentEl.appendChild(card);
-      });
-    }
-
-    function renderPreviewTiles(lst){
-      const imgs=(lst.items||[]).filter(w=>w.image).slice(0,3);
-      const has=(lst.items||[]).length>0;
-      const op=[1,.7,.4];
-      let html="";
-      for(let i=0;i<3;i++){
-        if(imgs[i]) html+=`<div class="tile-img" style="opacity:${has?1:op[i]};"><img src="${imgs[i].image}" alt=""></div>`;
-        else html+=`<div class="tile-ghost" style="opacity:${has?1:op[i]};"></div>`;
       }
-      return html;
-    }
 
-    function renderFriends(){
-      contentEl.innerHTML="";
-      state.friends.forEach(fr=>{
-        const card=document.createElement("div");
-        card.className="friend-card";
-        const lists=(state.friendLists[fr.id]||[]);
-        const lc=lists.length;
-        const wc=lists.reduce((a,l)=>a+(l.items?l.items.length:0),0);
+      function renderPreviewTiles(lst) {
+        const items = lst.items || [];
+        let html = "";
 
-        const initials=(fr.name||"U").split(" ").map(s=>s[0]).slice(0,2).join("").toUpperCase();
-        const ava = fr.photo ? `<img src="${fr.photo}" alt="">` : initials;
+        if (!items.length) {
+          const op = [1, 0.7, 0.4];
+          for (let i = 0; i < 3; i++) {
+            html += `<div class="tile-ghost" style="opacity:${op[i]};"></div>`;
+          }
+          return html;
+        }
 
-        card.innerHTML=`
+        const previews = items.slice(0, 3);
+        previews.forEach((w) => {
+          if (w.image) {
+            html += `<div class="tile-img" onclick="event.stopPropagation(); openWishDetail({ listId: '${lst.id}', wishId: '${w.id}' });">
+              <img src="${w.image}" alt="">
+            </div>`;
+          } else {
+            html += `<div class="tile-img" onclick="event.stopPropagation(); openWishDetail({ listId: '${lst.id}', wishId: '${w.id}' });">
+              🎁
+            </div>`;
+          }
+        });
+
+        return html;
+      }
+
+      function renderFriends() {
+        contentEl.innerHTML = "";
+        state.friends.forEach((fr) => {
+          const card = document.createElement("div");
+          card.className = "friend-card";
+          const lists = state.friendLists[fr.id] || [];
+          const lc = lists.length;
+          const wc = lists.reduce(
+            (a, l) => a + (l.items ? l.items.length : 0),
+            0
+          );
+
+          const initials = (fr.name || "U")
+            .split(" ")
+            .map((s) => s[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
+          const ava = fr.photo ? `<img src="${fr.photo}" alt="">` : initials;
+
+          card.innerHTML = `
           <div class="friend-content">
             <div class="friend-top">
               <div class="friend-head">
                 <div class="friend-ava">${ava}</div>
                 <div>
                   <div class="friend-title">${fr.name}</div>
-                  <div class="friend-sub">@${fr.tg||"username"}</div>
+                  <div class="friend-sub">@${fr.tg || "username"}</div>
                 </div>
               </div>
               <div style="opacity:.35;color:var(--text);">›</div>
             </div>
             <div class="friend-sub" style="margin-top:6px;">
-              ${lc} ${decl(lc,["список","списка","списков"])}, ${wc} ${decl(wc,["желание","желания","желаний"])}
+              ${lc} ${decl(lc, ["список", "списка", "списков"])}, ${wc} ${decl(
+            wc,
+            ["желание", "желания", "желаний"]
+          )}
             </div>
           </div>`;
-        card.onclick=()=>{state.openedFriendId=fr.id;renderSection();};
-        contentEl.appendChild(card);
-      });
+          card.onclick = () => {
+            state.openedFriendId = fr.id;
+            renderSection();
+          };
+          contentEl.appendChild(card);
+        });
 
-      const invite=document.createElement("div");
-      invite.className="friends-bottom-btn";
-      invite.innerHTML=`<span style="font-size:18px;">+</span> Пригласить друга`;
-      invite.onclick=()=>alert("Пригласить друга");
-      contentEl.appendChild(invite);
-    }
+        const invite = document.createElement("div");
+        invite.className = "friends-bottom-btn";
+        invite.innerHTML = `<span style="font-size:18px;">+</span> Пригласить друга`;
+        invite.onclick = () => alert("Пригласить друга");
+        contentEl.appendChild(invite);
+      }
 
-    /* Friend → his lists */
-    function renderFriendLists(friendId){
-      const lists=state.friendLists[friendId]||[];
-      contentEl.innerHTML="";
-      const wrap=document.createElement("div");
-      wrap.className="list-view";
-      wrap.innerHTML=`<div class="list-view-content">
-        <div class="list-view-top">
+      /* Friend → his lists */
+      function renderFriendLists(friendId) {
+        const lists = state.friendLists[friendId] || [];
+        contentEl.innerHTML = "";
+        const wrap = document.createElement("div");
+        wrap.className = "list-view";
+        wrap.style.background = "#101318";
+        const inner = document.createElement("div");
+        inner.className = "list-view-content";
+        inner.innerHTML = `<div class="list-view-top">
           <div class="circle-btn" id="fvClose">✕</div>
           <div style="width:40px;height:40px;"></div>
         </div>
         <div class="list-view-title">Списки друга</div>
-        <div id="friendLists" style="margin-top:16px;"></div>
-      </div>`;
-      contentEl.appendChild(wrap);
+        <div id="friendLists" style="margin-top:16px;"></div>`;
+        wrap.appendChild(inner);
+        contentEl.appendChild(wrap);
 
-      const fl=document.getElementById("friendLists");
-      lists.forEach(lst=>{
-        const card=document.createElement("div");
-        card.className="wl-card";
-        if(lst.bgImage) card.style.backgroundImage=`url(${lst.bgImage})`; else if(lst.gradient) card.style.background=lst.gradient;
-        const c=(lst.items||[]).length;
-        card.innerHTML=
-          `<div class="wl-content">
+        const fl = document.getElementById("friendLists");
+        lists.forEach((lst) => {
+          const card = document.createElement("div");
+          card.className = "wl-card";
+          if (lst.bgImage) card.style.backgroundImage = `url(${lst.bgImage})`;
+          else if (lst.gradient) card.style.background = lst.gradient;
+          const c = (lst.items || []).length;
+          card.innerHTML = `<div class="wl-content">
              <div class="wl-top">
                <div>
                  <div class="wl-title">${lst.name}</div>
-                 <div class="wl-sub">${c} ${decl(c,["желание","желания","желаний"])}</div>
+                 <div class="wl-sub">${c} ${decl(c, [
+            "желание",
+            "желания",
+            "желаний",
+          ])}</div>
                </div>
              </div>
              <div class="wl-bottom">${renderPreviewTiles(lst)}</div>
            </div>`;
-        card.onclick=()=>renderListView(lst.id,true,friendId);
-        fl.appendChild(card);
-      });
+          card.onclick = () => renderListView(lst.id, true, friendId);
+          fl.appendChild(card);
+        });
 
-      document.getElementById("fvClose").onclick=()=>{state.openedFriendId=null;renderSection();};
-    }
-
-    /* List details */
-    function renderListView(listId,isFriend=false,friendId=null){
-      let lst;
-      if(!isFriend){
-        lst=state.lists.find(l=>l.id===listId);
-      }else{
-        const arr=state.friendLists[friendId]||[];
-        lst=arr.find(l=>l.id===listId);
+        document.getElementById("fvClose").onclick = () => {
+          state.openedFriendId = null;
+          renderSection();
+        };
       }
-      if(!lst) return;
 
-      contentEl.innerHTML="";
-      const wrap=document.createElement("div");
-      wrap.className="list-view";
-      if(lst.bgImage) wrap.style.backgroundImage=`url(${lst.bgImage})`;
-      else if(lst.gradient) wrap.style.background=lst.gradient;
+      /* List details */
+      function renderListView(listId, isFriend = false, friendId = null) {
+        let lst;
+        if (!isFriend) {
+          lst = state.lists.find((l) => l.id === listId);
+        } else {
+          const arr = state.friendLists[friendId] || [];
+          lst = arr.find((l) => l.id === listId);
+        }
+        if (!lst) return;
 
-      wrap.innerHTML=`<div class="list-view-content">
+        contentEl.innerHTML = "";
+        const wrap = document.createElement("div");
+        wrap.className = "list-view";
+        if (lst.bgImage) wrap.style.backgroundImage = `url(${lst.bgImage})`;
+        else if (lst.gradient) wrap.style.background = lst.gradient;
+        else wrap.style.background = "#101318";
+
+        wrap.innerHTML = `<div class="list-view-content">
         <div class="list-view-top">
           <div class="circle-btn" id="lvClose">✕</div>
-          <div style="width:40px;height:40px;"></div>
+          <div class="circle-btn" id="lvEdit">✎</div>
         </div>
         <div class="list-view-title">${lst.name}</div>
         <div class="wish-grid" id="wishGrid"></div>
       </div>
       <div class="list-bottom-row">
-        <div class="lb-round" id="lbEdit">✎</div>
         <div class="lb-round" id="lbAdd">+</div>
         <div class="lb-round" id="lbShare">⤴︎</div>
       </div>`;
-      contentEl.appendChild(wrap);
+        contentEl.appendChild(wrap);
 
-      const grid=document.getElementById("wishGrid");
-      if(!lst.items||!lst.items.length){
-        const empty=document.createElement("div");
-        empty.style.opacity=".6";
-        empty.style.marginTop="20px";
-        empty.style.color="#fff";
-        empty.textContent="Пока нет желаний";
-        grid.appendChild(empty);
-      }else{
-        lst.items.forEach(w=>{
-          const c=document.createElement("div");c.className="wish-box";
-          const img=w.image
-            ? `<div class="wish-box-img" style="background-image:url(${w.image});"></div>`
-            : `<div class="wish-box-img"></div>`;
-          let bottom;
-          if(w.price){
-            bottom=`<div class="wish-box-price">${w.price}</div>`;
-          }else if(w.desc){
-            bottom=`<div class="wish-box-sub">${w.desc}</div>`;
-          }else{
-            bottom=`<div class="wish-box-sub">${w.link?"ссылка есть":"без ссылки"}</div>`;
-          }
-          c.innerHTML=`${img}
+        const grid = document.getElementById("wishGrid");
+        if (!lst.items || !lst.items.length) {
+          const empty = document.createElement("div");
+          empty.style.opacity = ".7";
+          empty.style.marginTop = "20px";
+          empty.style.color = "#ffffff";
+          empty.style.textAlign = "center";
+          empty.textContent = "Пока нет желаний";
+          grid.appendChild(empty);
+        } else {
+          lst.items.forEach((w) => {
+            const c = document.createElement("div");
+            c.className = "wish-box";
+            let imgBlock;
+            if (w.image) {
+              imgBlock = `<div class="wish-box-img"><img src="${w.image}" alt=""></div>`;
+            } else {
+              imgBlock = `<div class="wish-box-img">🎁</div>`;
+            }
+
+            let bottom;
+            if (w.price) {
+              bottom = `<div class="wish-box-price">${w.price}</div>`;
+            } else if (w.desc) {
+              bottom = `<div class="wish-box-sub">${w.desc}</div>`;
+            } else {
+              bottom = `<div class="wish-box-sub">${
+                w.link ? "ссылка есть" : "без ссылки"
+              }</div>`;
+            }
+            c.innerHTML = `${imgBlock}
             <div class="wish-box-body">
               <div class="wish-box-title">${w.title}</div>
               ${bottom}
             </div>`;
-          c.onclick=()=>{ if(!isFriend) openWishEditor({listId:listId,wishId:w.id}); };
-          grid.appendChild(c);
-        });
+            c.onclick = () => {
+              if (!isFriend) {
+                openWishDetail({ listId: listId, wishId: w.id });
+              } else {
+                openWishDetail({
+                  listId: listId,
+                  wishId: w.id,
+                  isFriend: true,
+                  friendId: friendId,
+                });
+              }
+            };
+            grid.appendChild(c);
+          });
+        }
+
+        document.getElementById("lvClose").onclick = () => {
+          if (isFriend) {
+            renderFriendLists(friendId);
+          } else {
+            state.openedListId = null;
+            renderSection();
+          }
+        };
+
+        const editBtn = document.getElementById("lvEdit");
+        if (editBtn) {
+          if (isFriend) {
+            editBtn.style.opacity = "0.3";
+            editBtn.style.cursor = "default";
+          } else {
+            editBtn.onclick = () => openCreateListScreen(lst);
+          }
+        }
+
+        const shareBtn = document.getElementById("lbShare");
+        if (shareBtn) {
+          if (isFriend) {
+            shareBtn.onclick = () => alert("Это список друга");
+          } else {
+            shareBtn.onclick = () => openShareMenu(listId);
+          }
+        }
+
+        const addBtn = document.getElementById("lbAdd");
+        if (addBtn) {
+          if (isFriend) addBtn.onclick = () => alert("Это список друга");
+          else addBtn.onclick = () => openWishEditor({ listId });
+        }
       }
 
-      document.getElementById("lvClose").onclick=()=>{
-        if(isFriend){renderFriendLists(friendId);}
-        else{state.openedListId=null;renderSection();}
-      };
+      /* SHARE MENU (список) */
+      function openShareMenu(listId) {
+        const lst = state.lists.find((l) => l.id === listId);
+        if (!lst) return;
 
-      const shareBtn=document.getElementById("lbShare");
-      shareBtn.onclick=()=>alert("Ссылка: https://t.me/your_bot?list="+listId);
+        if (typeof lst.isPublic === "undefined") lst.isPublic = true; // по умолчанию — публичный
+        const shareUrl = `https://onlywishes.app/list/${listId}`;
 
-      const addBtn=document.getElementById("lbAdd");
-      if(addBtn){
-        if(isFriend) addBtn.onclick=()=>alert("Это список друга");
-        else addBtn.onclick=()=>openWishEditor({listId});
+        const overlay = openBottomSheet(`
+          <div class="bs-title">Настройки доступа</div>
+          <div class="bs-toggle-wrap">
+            <div>Публичный список</div>
+            <div class="bs-toggle ${
+              lst.isPublic ? "active" : ""
+            }" data-list-id="${listId}">
+              <div class="bs-toggle-thumb"></div>
+            </div>
+          </div>
+          ${
+            lst.isPublic
+              ? `
+              <div style="font-size:13px;opacity:.7;margin-bottom:6px;">Ссылка</div>
+              <div class="bs-link-row">
+                <div class="bs-link-text">${shareUrl}</div>
+                <button class="bs-link-copy">Копировать</button>
+              </div>
+            `
+              : `
+              <div style="font-size:13px;opacity:.7;">
+                Список доступен только вам и приглашённым друзьям.
+              </div>
+            `
+          }
+          <div style="margin-top:22px;font-size:13px;opacity:.7;margin-bottom:6px;">Команда</div>
+          <div class="bs-team-row">
+            Добавить друзей для совместного редактирования (в разработке).
+          </div>
+        `);
+
+        const toggle = overlay.querySelector(".bs-toggle");
+        if (toggle) {
+          toggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            lst.isPublic = !lst.isPublic;
+            overlay.remove();
+            openShareMenu(listId);
+          });
+        }
+
+        const copyBtn = overlay.querySelector(".bs-link-copy");
+        if (copyBtn && navigator.clipboard?.writeText) {
+          copyBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+              copyBtn.textContent = "Скопировано";
+              setTimeout(() => (copyBtn.textContent = "Копировать"), 1500);
+            } catch {
+              alert("Не удалось скопировать ссылку");
+            }
+          });
+        }
       }
 
-      const editBtn=document.getElementById("lbEdit");
-      if(editBtn){
-        if(isFriend) editBtn.onclick=()=>alert("Это список друга");
-        else editBtn.onclick=()=>openCreateListScreen(lst);
+      /* ===== HELPERS ===== */
+      function isProbablyLink(str) {
+        const v = str.trim();
+        if (!v) return false;
+        return (
+          v.startsWith("http://") || v.startsWith("https://") || v.includes(".")
+        );
       }
-    }
 
-    /* ===== HELPERS ===== */
-    function isProbablyLink(str){
-      const v=str.trim();
-      if(!v) return false;
-      return v.startsWith("http://") || v.startsWith("https://") || v.includes(".");
-    }
+      /* ===== WISH DETAIL VIEW — bottom sheet ===== */
+      function openWishDetail({
+        listId,
+        wishId,
+        isFriend = false,
+        friendId = null,
+      }) {
+        let list, wish;
+        if (!isFriend) {
+          list = state.lists.find((l) => l.id === listId);
+          wish = list ? list.items.find((i) => i.id === wishId) : null;
+        } else {
+          const friendLists = state.friendLists[friendId] || [];
+          list = friendLists.find((l) => l.id === listId);
+          wish = list ? list.items.find((i) => i.id === wishId) : null;
+        }
 
-    /* ===== WISH BOTTOM SHEET EDITOR ===== */
-    function openWishEditor({listId,wishId=null}){
-      const list=state.lists.find(l=>l.id===listId); if(!list) return;
-      const wish=wishId?list.items.find(i=>i.id===wishId):null;
+        if (!wish) return;
 
-      const overlay=document.createElement("div");
-      overlay.className="wish-overlay";
+        const overlay = document.createElement("div");
+        overlay.className = "bottom-overlay";
 
-      const sheet=document.createElement("div");
-      sheet.className="wish-sheet";
-      overlay.appendChild(sheet);
+        const sheet = document.createElement("div");
+        sheet.className = "wish-detail-sheet";
 
-      const drag=document.createElement("div");
-      drag.className="wish-drag";
-      sheet.appendChild(drag);
+        // Верхняя панель: только крестик справа
+        const topBar = document.createElement("div");
+        topBar.className = "wish-detail-top";
 
-      const scrollZone=document.createElement("div");
-      scrollZone.className="wish-sheet-scroll";
-      sheet.appendChild(scrollZone);
+        const closeBtn = document.createElement("div");
+        closeBtn.className = "wd-circle";
+        closeBtn.innerHTML = "✕";
+        closeBtn.onclick = () => document.body.removeChild(overlay);
 
-      const titleRow=document.createElement("div");
-      titleRow.className="wish-title-row";
-      titleRow.innerHTML=`<div class="wish-heading">${wish?"Редактирование желания":"Новое желание"}</div>`;
-      scrollZone.appendChild(titleRow);
+        topBar.appendChild(closeBtn);
 
-      // 1. Название
-      const titleBlock=document.createElement("div");
-      titleBlock.className="wish-input-block";
-      titleBlock.innerHTML=`
+        // Фото
+        const imageWrap = document.createElement("div");
+        imageWrap.className = "wish-detail-image";
+        if (wish.image) {
+          const imgEl = document.createElement("img");
+          imgEl.src = wish.image;
+          imgEl.alt = "";
+          imageWrap.appendChild(imgEl);
+        } else {
+          const span = document.createElement("div");
+          span.style.fontSize = "64px";
+          span.textContent = "🎁";
+          imageWrap.appendChild(span);
+        }
+
+        // Контент
+        const content = document.createElement("div");
+        content.className = "wish-detail-content";
+
+        const titleEl = document.createElement("div");
+        titleEl.className = "wish-detail-title";
+        if (wish.link) {
+          const a = document.createElement("a");
+          a.href = wish.link;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = wish.title;
+          titleEl.appendChild(a);
+        } else {
+          titleEl.textContent = wish.title;
+        }
+
+        const priceEl = document.createElement("div");
+        if (wish.price) {
+          priceEl.className = "wish-detail-price";
+          priceEl.textContent = wish.price;
+        }
+
+        content.appendChild(titleEl);
+        if (wish.price) content.appendChild(priceEl);
+
+        // Нижние кружки: поделиться, редактировать, меню
+        const actionsRow = document.createElement("div");
+        actionsRow.className = "wish-detail-actions";
+
+        function makeActionCircle(icon) {
+          const el = document.createElement("div");
+          el.className = "wd-round";
+          el.textContent = icon;
+          return el;
+        }
+
+        const shareBtn = makeActionCircle("⤴︎");
+        const editBtn = makeActionCircle("✎");
+        const menuBtn = makeActionCircle("⋯");
+
+        shareBtn.onclick = () => {
+          alert("Поделиться желанием (позже будет нормальный шаринг)");
+        };
+
+        if (!isFriend) {
+          editBtn.onclick = () => {
+            document.body.removeChild(overlay);
+            openWishEditor({ listId, wishId });
+          };
+          menuBtn.onclick = () =>
+            openWishActionsMenu({
+              listId,
+              wishId,
+              overlay,
+            });
+        } else {
+          editBtn.style.opacity = "0.3";
+          editBtn.style.cursor = "default";
+          menuBtn.onclick = () =>
+            openWishActionsMenu({
+              listId,
+              wishId,
+              overlay,
+              readOnly: true,
+            });
+        }
+
+        actionsRow.appendChild(shareBtn);
+        actionsRow.appendChild(editBtn);
+        actionsRow.appendChild(menuBtn);
+
+        sheet.appendChild(topBar);
+        sheet.appendChild(imageWrap);
+        sheet.appendChild(content);
+        sheet.appendChild(actionsRow);
+
+        overlay.appendChild(sheet);
+        overlay.onclick = (e) => {
+          if (e.target === overlay) document.body.removeChild(overlay);
+        };
+
+        document.body.appendChild(overlay);
+      }
+
+      function openWishActionsMenu({
+        listId,
+        wishId,
+        overlay,
+        readOnly = false,
+      }) {
+        const list = state.lists.find((l) => l.id === listId);
+        const sheetOverlay = openBottomSheet(`
+          <div class="bs-title">Действия</div>
+          ${
+            readOnly
+              ? `<div class="bs-item" data-act="book">Уже забронирован</div>`
+              : `
+            <div class="bs-item" data-act="book">Уже забронирован</div>
+            <div class="bs-item" data-act="received">Подарок получен</div>
+            <div class="bs-item" data-act="move">Перенести в…</div>
+            <div class="bs-item danger" data-act="delete">Удалить</div>
+          `
+          }
+        `);
+
+        sheetOverlay.querySelectorAll(".bs-item").forEach((el) =>
+          el.addEventListener("click", () => {
+            const act = el.dataset.act;
+            if (act === "book") {
+              alert("Желание забронировано");
+            }
+            if (act === "received") {
+              alert("Желание отмечено как полученное");
+            }
+            if (act === "move") {
+              openMoveWishSheet(listId, wishId, overlay, sheetOverlay);
+              return;
+            }
+            if (act === "delete") {
+              if (confirm("Удалить это желание?")) {
+                const lst = state.lists.find((l) => l.id === listId);
+                if (lst) {
+                  lst.items = lst.items.filter((i) => i.id !== wishId);
+                  sheetOverlay.remove();
+                  overlay.remove();
+                  renderSection();
+                  alert("Желание удалено");
+                  return;
+                }
+              }
+            }
+            sheetOverlay.remove();
+          })
+        );
+      }
+
+      function openMoveWishSheet(fromListId, wishId, mainOverlay, parentSheet) {
+        const fromList = state.lists.find((l) => l.id === fromListId);
+        if (!fromList) return;
+
+        const sheetOverlay = openBottomSheet(`
+          <div class="bs-title">Перенести в список</div>
+          ${state.lists
+            .filter((l) => l.id !== fromListId)
+            .map(
+              (l) =>
+                `<div class="bs-item" data-list-id="${l.id}">${l.name}</div>`
+            )
+            .join("")}
+        `);
+
+        sheetOverlay.querySelectorAll(".bs-item").forEach((el) =>
+          el.addEventListener("click", () => {
+            const toListId = el.dataset.listId;
+            const toList = state.lists.find((l) => l.id === toListId);
+            if (!toList) return;
+            const idx = fromList.items.findIndex((i) => i.id === wishId);
+            if (idx === -1) return;
+            const wish = fromList.items.splice(idx, 1)[0];
+            toList.items.push(wish);
+            sheetOverlay.remove();
+            if (parentSheet) parentSheet.remove();
+            if (mainOverlay) mainOverlay.remove();
+            renderSection();
+            alert(`Желание перенесено в список "${toList.name}"`);
+          })
+        );
+      }
+
+      /* ===== WISH BOTTOM SHEET EDITOR ===== */
+      function openWishEditor({ listId, wishId = null }) {
+        const list = state.lists.find((l) => l.id === listId);
+        if (!list) return;
+        const wish = wishId ? list.items.find((i) => i.id === wishId) : null;
+
+        const overlay = document.createElement("div");
+        overlay.className = "wish-overlay";
+
+        const sheet = document.createElement("div");
+        sheet.className = "wish-sheet";
+        overlay.appendChild(sheet);
+
+        const drag = document.createElement("div");
+        drag.className = "wish-drag";
+        sheet.appendChild(drag);
+
+        const scrollZone = document.createElement("div");
+        scrollZone.className = "wish-sheet-scroll";
+        sheet.appendChild(scrollZone);
+
+        const titleRow = document.createElement("div");
+        titleRow.className = "wish-title-row";
+        titleRow.innerHTML = `<div class="wish-heading">${
+          wish ? "Редактирование желания" : "Новое желание"
+        }</div>`;
+        scrollZone.appendChild(titleRow);
+
+        // 1. Название
+        const titleBlock = document.createElement("div");
+        titleBlock.className = "wish-input-block";
+        titleBlock.innerHTML = `
         <div class="wish-label">Название</div>
         <input class="wish-input" id="w_title" placeholder="Например, наушники Sony"
-               value="${wish ? (wish.title || "") : ""}">
+               value="${wish ? wish.title || "" : ""}">
       `;
-      scrollZone.appendChild(titleBlock);
+        scrollZone.appendChild(titleBlock);
 
-      // 2. Ссылка + кнопка "Вставить"
-      const linkBlock=document.createElement("div");
-      linkBlock.className="wish-input-block";
-      linkBlock.innerHTML=`
+        // 2. Ссылка + кнопка "Вставить"
+        const linkBlock = document.createElement("div");
+        linkBlock.className = "wish-input-block";
+        linkBlock.innerHTML = `
         <div class="wish-label">Ссылка</div>
         <div style="display:flex;gap:8px;align-items:center;">
           <input class="wish-input" id="w_link" placeholder="Вставьте ссылку"
-                 value="${wish ? (wish.link || "") : ""}">
+                 value="${wish ? wish.link || "" : ""}">
           <button type="button" class="wish-clip-btn" id="w_paste">Вставить</button>
         </div>
       `;
-      scrollZone.appendChild(linkBlock);
+        scrollZone.appendChild(linkBlock);
 
-      // 3. Изображения — квадраты
-      const imgLabelBlock=document.createElement("div");
-      imgLabelBlock.className="wish-input-block";
-      imgLabelBlock.style.background="transparent";
-      imgLabelBlock.style.paddingBottom="4px";
-      imgLabelBlock.innerHTML=`<div class="wish-label">Изображение</div>`;
-      scrollZone.appendChild(imgLabelBlock);
+        // 3. Изображения — только плюс и реальные варианты
+        const imgLabelBlock = document.createElement("div");
+        imgLabelBlock.className = "wish-input-block";
+        imgLabelBlock.style.background = "transparent";
+        imgLabelBlock.style.paddingBottom = "4px";
+        imgLabelBlock.innerHTML = `<div class="wish-label">Изображение</div>`;
+        scrollZone.appendChild(imgLabelBlock);
 
-      const imgRow=document.createElement("div");
-      imgRow.className="wish-img-row";
-      scrollZone.appendChild(imgRow);
+        const imgRow = document.createElement("div");
+        imgRow.className = "wish-img-row";
+        scrollZone.appendChild(imgRow);
 
-      // 4. Описание
-      const descBlock=document.createElement("div");
-      descBlock.className="wish-input-block";
-      descBlock.innerHTML=`
+        // 4. Описание
+        const descBlock = document.createElement("div");
+        descBlock.className = "wish-input-block";
+        descBlock.innerHTML = `
         <div class="wish-label">Описание</div>
         <textarea class="wish-input" id="w_desc" rows="2" style="resize:none;"
-                  placeholder="Размер, цвет, любые пожелания...">${wish?(wish.desc||""):""}</textarea>
+                  placeholder="Размер, цвет, любые пожелания...">${
+                    wish ? wish.desc || "" : ""
+                  }</textarea>
       `;
-      scrollZone.appendChild(descBlock);
+        scrollZone.appendChild(descBlock);
 
-      // 5. Стоимость
-      const priceBlock=document.createElement("div");
-      priceBlock.className="wish-input-block";
-      priceBlock.innerHTML=`
+        // 5. Стоимость
+        const priceBlock = document.createElement("div");
+        priceBlock.className = "wish-input-block";
+        priceBlock.innerHTML = `
         <div class="wish-label">Стоимость</div>
         <input class="wish-input" id="w_price" placeholder="Например, 4 990 ₽"
-               value="${wish?(wish.price||""):""}">
+               value="${wish ? wish.price || "" : ""}">
       `;
-      scrollZone.appendChild(priceBlock);
+        scrollZone.appendChild(priceBlock);
 
-      let currentImage = wish ? (wish.image||"") : "";
-      let imageOptions = [];
+        let currentImage = wish ? wish.image || "" : "";
+        let imageOptions = [];
 
-      const fileInput=document.createElement("input");
-      fileInput.type="file";
-      fileInput.accept="image/*";
-      fileInput.style.display="none";
-      overlay.appendChild(fileInput);
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = "image/*";
+        fileInput.style.display = "none";
+        overlay.appendChild(fileInput);
 
-      function rebuildImageRow(){
-        imgRow.innerHTML="";
+        function rebuildImageRow() {
+          imgRow.innerHTML = "";
 
-        // плюс
-        const plusTile=document.createElement("div");
-        plusTile.className="wish-img-tile";
-        plusTile.innerHTML="+";
-        plusTile.onclick=()=>fileInput.click();
-        imgRow.appendChild(plusTile);
+          // плюс
+          const plusTile = document.createElement("div");
+          plusTile.className = "wish-img-tile";
+          plusTile.innerHTML = "+";
+          plusTile.onclick = () => fileInput.click();
+          imgRow.appendChild(plusTile);
 
-        // две подарочные коробки
-        const giftImages=[
-          "https://img.icons8.com/emoji/96/gift-emoji.png",
-          "https://img.icons8.com/emoji/96/wrapped-gift-emoji.png"
-        ];
-        giftImages.forEach((src,idx)=>{
-          const t=document.createElement("div");
-          t.className="wish-img-tile";
-          t.style.backgroundImage=`url(${src})`;
-          t.style.opacity = idx===0 ? "1" : "0.55";
-          if(currentImage===src) t.classList.add("active");
-          t.onclick=()=>{
-            currentImage=src;
-            imgRow.querySelectorAll(".wish-img-tile").forEach(x=>x.classList.remove("active"));
-            t.classList.add("active");
-          };
-          imgRow.appendChild(t);
-        });
-
-        // остальные варианты (кроме подарочных)
-        imageOptions.forEach(src=>{
-          if(giftImages.includes(src)) return;
-          const t=document.createElement("div");
-          t.className="wish-img-tile";
-          t.style.backgroundImage=`url(${src})`;
-          if(src===currentImage) t.classList.add("active");
-          t.onclick=()=>{
-            currentImage=src;
-            imgRow.querySelectorAll(".wish-img-tile").forEach(x=>x.classList.remove("active"));
-            t.classList.add("active");
-          };
-          imgRow.appendChild(t);
-        });
-
-        if(currentImage &&
-           !imageOptions.includes(currentImage) &&
-           !giftImages.includes(currentImage)){
-          imageOptions.unshift(currentImage);
+          // добавленные / авто-подтянутые
+          imageOptions.forEach((src) => {
+            const t = document.createElement("div");
+            t.className = "wish-img-tile";
+            t.style.backgroundImage = `url(${src})`;
+            if (src === currentImage) t.classList.add("active");
+            t.onclick = () => {
+              currentImage = src;
+              imgRow
+                .querySelectorAll(".wish-img-tile")
+                .forEach((x) => x.classList.remove("active"));
+              t.classList.add("active");
+            };
+            imgRow.appendChild(t);
+          });
         }
-      }
 
-      fileInput.onchange=e=>{
-        const f=e.target.files[0];
-        if(!f) return;
-        const r=new FileReader();
-        r.onload=ev=>{
-          currentImage=ev.target.result;
-          imageOptions.unshift(currentImage);
-          rebuildImageRow();
-        };
-        r.readAsDataURL(f);
-      };
-
-      function autoFillFromLink(link){
-        const titleInput=document.getElementById("w_title");
-        const descInput=document.getElementById("w_desc");
-        const priceInput=document.getElementById("w_price");
-
-        try{
-          const url=new URL(link.includes("://")?link:"https://"+link);
-          const path=url.pathname.split("/").filter(Boolean);
-          let base=path[path.length-1]||url.hostname;
-          base=decodeURIComponent(base.replace(/[-_]/g," "));
-          if(base.length>60) base=base.slice(0,57)+"…";
-
-          if(titleInput && !titleInput.value.trim()){
-            titleInput.value=base;
-          }
-
-          imageOptions=[
-            `https://picsum.photos/seed/${encodeURIComponent(url.hostname+"-1")}/300/200`,
-            `https://picsum.photos/seed/${encodeURIComponent(url.hostname+"-2")}/300/200`,
-            `https://picsum.photos/seed/${encodeURIComponent(url.hostname+"-3")}/300/200`
-          ];
-          currentImage=imageOptions[0];
-          rebuildImageRow();
-
-          if(descInput && !descInput.value.trim()){
-            descInput.value="Данные по товару подтянуты по ссылке";
-          }
-          if(priceInput && !priceInput.value.trim()){
-            priceInput.placeholder="Цена подтянется из магазина";
-          }
-        }catch(e){
-          imageOptions=[
-            `https://picsum.photos/seed/${encodeURIComponent(link+"-1")}/300/200`,
-            `https://picsum.photos/seed/${encodeURIComponent(link+"-2")}/300/200`
-          ];
-          currentImage=imageOptions[0];
-          rebuildImageRow();
-        }
-      }
-
-      // стартовое состояние
-      if(wish){
-        if(wish.image){
-          currentImage=wish.image;
-          imageOptions=[wish.image];
-        }else if(wish.link){
-          autoFillFromLink(wish.link);
-        }
-      }
-      rebuildImageRow();
-
-      document.body.appendChild(overlay);
-
-      const linkInput=document.getElementById("w_link");
-      const pasteBtn=document.getElementById("w_paste");
-
-      if(pasteBtn && navigator.clipboard && navigator.clipboard.readText){
-        pasteBtn.onclick=async ()=>{
-          try{
-            const txt=await navigator.clipboard.readText();
-            if(txt){
-              linkInput.value=txt;
-              linkInput.focus();
-              linkInput.dispatchEvent(new Event("blur"));
+        fileInput.onchange = (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          const r = new FileReader();
+          r.onload = (ev) => {
+            currentImage = ev.target.result;
+            if (!imageOptions.includes(currentImage)) {
+              imageOptions.unshift(currentImage);
             }
-          }catch(err){
-            alert("Не удалось прочитать буфер обмена");
-          }
+            rebuildImageRow();
+          };
+          r.readAsDataURL(f);
         };
-      }else if(pasteBtn){
-        pasteBtn.style.display="none";
-      }
 
-      if(linkInput){
-        linkInput.addEventListener("blur",()=>{
-          let v=linkInput.value.trim();
-          if(!v) return;
-          if(!isProbablyLink(v)) return;
-          if(!/^https?:\/\//.test(v)) v="https://"+v;
-          linkInput.value=v;
-          autoFillFromLink(v);
-        });
-      }
+        function autoFillFromLink(link) {
+          const titleInput = document.getElementById("w_title");
+          const descInput = document.getElementById("w_desc");
+          const priceInput = document.getElementById("w_price");
 
-      function closeOverlay(){
-        overlay.remove();
-      }
+          try {
+            const url = new URL(
+              link.includes("://") ? link : "https://" + link
+            );
+            const path = url.pathname.split("/").filter(Boolean);
+            let base = path[path.length - 1] || url.hostname;
+            base = decodeURIComponent(base.replace(/[-_]/g, " "));
+            if (base.length > 60) base = base.slice(0, 57) + "…";
 
-      // Низ: крестик и галочка
-      const bottomRow=document.createElement("div");
-      bottomRow.className="wish-bottom-actions";
-      bottomRow.innerHTML=`
+            if (titleInput && !titleInput.value.trim()) {
+              titleInput.value = base;
+            }
+
+            imageOptions = [
+              `https://picsum.photos/seed/${encodeURIComponent(
+                url.hostname + "-1"
+              )}/300/200`,
+              `https://picsum.photos/seed/${encodeURIComponent(
+                url.hostname + "-2"
+              )}/300/200`,
+              `https://picsum.photos/seed/${encodeURIComponent(
+                url.hostname + "-3"
+              )}/300/200`,
+            ];
+            currentImage = imageOptions[0];
+            rebuildImageRow();
+
+            if (descInput && !descInput.value.trim()) {
+              // молчим, как просил — без служебных надписей
+            }
+            if (priceInput && !priceInput.value.trim()) {
+              priceInput.placeholder = "Цена подтянется из магазина";
+            }
+          } catch (e) {
+            imageOptions = [
+              `https://picsum.photos/seed/${encodeURIComponent(
+                link + "-1"
+              )}/300/200`,
+              `https://picsum.photos/seed/${encodeURIComponent(
+                link + "-2"
+              )}/300/200`,
+            ];
+            currentImage = imageOptions[0];
+            rebuildImageRow();
+          }
+        }
+
+        // стартовое состояние
+        if (wish) {
+          if (wish.image) {
+            currentImage = wish.image;
+            imageOptions = [wish.image];
+          } else if (wish.link) {
+            autoFillFromLink(wish.link);
+          }
+        }
+        rebuildImageRow();
+
+        document.body.appendChild(overlay);
+
+        const linkInput = document.getElementById("w_link");
+        const pasteBtn = document.getElementById("w_paste");
+
+        if (pasteBtn && navigator.clipboard && navigator.clipboard.readText) {
+          pasteBtn.onclick = async () => {
+            try {
+              const txt = await navigator.clipboard.readText();
+              if (txt) {
+                linkInput.value = txt;
+                linkInput.focus();
+                linkInput.dispatchEvent(new Event("blur"));
+              }
+            } catch (err) {
+              alert("Не удалось прочитать буфер обмена");
+            }
+          };
+        } else if (pasteBtn) {
+          pasteBtn.style.display = "none";
+        }
+
+        if (linkInput) {
+          linkInput.addEventListener("blur", () => {
+            let v = linkInput.value.trim();
+            if (!v) return;
+            if (!isProbablyLink(v)) return;
+            if (!/^https?:\/\//.test(v)) v = "https://" + v;
+            linkInput.value = v;
+            autoFillFromLink(v);
+          });
+        }
+
+        function closeOverlay() {
+          overlay.remove();
+        }
+
+        // Низ: крестик и галочка
+        const bottomRow = document.createElement("div");
+        bottomRow.className = "wish-bottom-actions";
+        bottomRow.innerHTML = `
         <div class="wish-round-big" id="w_cancel">✕</div>
         <div class="wish-round-big" id="w_save">✓</div>
       `;
-      scrollZone.appendChild(bottomRow);
+        scrollZone.appendChild(bottomRow);
 
-      document.getElementById("w_cancel").onclick=closeOverlay;
+        document.getElementById("w_cancel").onclick = closeOverlay;
 
-      document.getElementById("w_save").onclick=()=>{
-        const titleVal=(document.getElementById("w_title")?.value.trim()) || "";
-        let linkVal=(document.getElementById("w_link")?.value.trim()) || "";
-        const descVal=(document.getElementById("w_desc")?.value.trim()) || "";
-        const priceVal=(document.getElementById("w_price")?.value.trim()) || "";
+        document.getElementById("w_save").onclick = () => {
+          const titleVal =
+            document.getElementById("w_title")?.value.trim() || "";
+          let linkVal = document.getElementById("w_link")?.value.trim() || "";
+          const descVal = document.getElementById("w_desc")?.value.trim() || "";
+          const priceVal =
+            document.getElementById("w_price")?.value.trim() || "";
 
-        if(!titleVal && !linkVal){
-          alert("Добавь хотя бы название или ссылку");
-          return;
-        }
-        if(linkVal && !/^https?:\/\//.test(linkVal) && isProbablyLink(linkVal)){
-          linkVal="https://"+linkVal;
-        }
+          if (!titleVal && !linkVal) {
+            alert("Добавь хотя бы название или ссылку");
+            return;
+          }
+          if (
+            linkVal &&
+            !/^https?:\/\//.test(linkVal) &&
+            isProbablyLink(linkVal)
+          ) {
+            linkVal = "https://" + linkVal;
+          }
 
-        if(wish){
-          wish.title=titleVal || wish.title || "Без названия";
-          wish.link=linkVal;
-          wish.desc=descVal;
-          wish.price=priceVal;
-          wish.image=currentImage;
-        }else{
-          list.items.push({
-            id:"w"+Math.random().toString(16).slice(2,7),
-            title:titleVal || "Без названия",
-            link:linkVal,
-            desc:descVal,
-            price:priceVal,
-            image:currentImage
-          });
-        }
-        closeOverlay();
-        state.openedListId=listId;
-        renderSection();
-      };
+          if (wish) {
+            wish.title = titleVal || wish.title || "Без названия";
+            wish.link = linkVal;
+            wish.desc = descVal;
+            wish.price = priceVal;
+            wish.image = currentImage;
+          } else {
+            list.items.push({
+              id: "w" + Math.random().toString(16).slice(2, 7),
+              title: titleVal || "Без названия",
+              link: linkVal,
+              desc: descVal,
+              price: priceVal,
+              image: currentImage,
+            });
+          }
+          closeOverlay();
+          state.openedListId = listId;
+          renderSection();
+        };
 
-      // закрытие по клику мимо
-      overlay.addEventListener("click",e=>{
-        if(e.target===overlay) closeOverlay();
-      });
-    }
-
-    /* ===== COLOR UTILS (for list gradients) ===== */
-    function hexToHsl(hex){
-      hex=hex.replace('#','');
-      const bigint=parseInt(hex,16);
-      const r=(bigint>>16)&255,g=(bigint>>8)&255,b=bigint&255;
-      const r1=r/255,g1=g/255,b1=b/255;
-      const max=Math.max(r1,g1,b1),min=Math.min(r1,g1,b1);
-      let h,s,l=(max+min)/2;
-      if(max===min){h=s=0;}else{
-        const d=max-min;
-        s=l>0.5?d/(2-max-min):d/(max+min);
-        switch(max){
-          case r1:h=(g1-b1)/d+(g1<b1?6:0);break;
-          case g1:h=(b1-r1)/d+2;break;
-          case b1:h=(r1-g1)/d+4;break;
-        }
-        h/=6;
+        // закрытие по клику мимо
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) closeOverlay();
+        });
       }
-      return {h:Math.round(h*360),s:Math.round(s*100),l:Math.round(l*100)};
-    }
-    function hslToCss(h,s,l){return `hsl(${h} ${s}% ${l}%)`}
 
-    /* ===== CREATE/EDIT LIST ===== */
-    function openCreateListScreen(listObj=null){
-      const overlay=document.createElement("div");
-      overlay.className="create-overlay";
-      let selectedGradient=listObj?(listObj.gradient||DEFAULT_GRADIENT):DEFAULT_GRADIENT;
-      let selectedImage=listObj?listObj.bgImage||null:null;
-      if(selectedImage){overlay.style.backgroundImage=`url(${selectedImage})`;}
-      else{overlay.style.background=selectedGradient;}
+      /* ===== COLOR UTILS (for list gradients) ===== */
+      function hexToHsl(hex) {
+        hex = hex.replace("#", "");
+        const bigint = parseInt(hex, 16);
+        const r = (bigint >> 16) & 255,
+          g = (bigint >> 8) & 255,
+          b = bigint & 255;
+        const r1 = r / 255,
+          g1 = g / 255,
+          b1 = b / 255;
+        const max = Math.max(r1, g1, b1),
+          min = Math.min(r1, g1, b1);
+        let h,
+          s,
+          l = (max + min) / 2;
+        if (max === min) {
+          h = s = 0;
+        } else {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r1:
+              h = (g1 - b1) / d + (g1 < b1 ? 6 : 0);
+              break;
+            case g1:
+              h = (b1 - r1) / d + 2;
+              break;
+            case b1:
+              h = (r1 - g1) / d + 4;
+              break;
+          }
+          h /= 6;
+        }
+        return {
+          h: Math.round(h * 360),
+          s: Math.round(s * 100),
+          l: Math.round(l * 100),
+        };
+      }
+      function hslToCss(h, s, l) {
+        return `hsl(${h} ${s}% ${l}%)`;
+      }
 
-      const stack=document.createElement("div");stack.className="create-stack";overlay.appendChild(stack);
+      /* ===== CREATE/EDIT LIST ===== */
+      function openCreateListScreen(listObj = null) {
+        const overlay = document.createElement("div");
+        overlay.className = "create-overlay";
+        let selectedGradient = listObj
+          ? listObj.gradient || DEFAULT_GRADIENT
+          : DEFAULT_GRADIENT;
+        let selectedImage = listObj ? listObj.bgImage || null : null;
+        if (selectedImage) {
+          overlay.style.backgroundImage = `url(${selectedImage})`;
+        } else {
+          overlay.style.background = selectedGradient;
+        }
 
-      const row=document.createElement("div");row.className="create-gradient-row";stack.appendChild(row);
+        const stack = document.createElement("div");
+        stack.className = "create-stack";
+        overlay.appendChild(stack);
 
-      // [+] chip: загрузить фон
-      const plus=document.createElement("div");
-      plus.className="chip";
-      plus.innerHTML='<span class="chip-icon">+</span>';
-      row.appendChild(plus);
+        const row = document.createElement("div");
+        row.className = "create-gradient-row";
+        stack.appendChild(row);
 
-      // палитра
-      const pal=document.createElement("div");
-      pal.className="chip chip-palette";
-      pal.innerHTML=`<svg viewBox="0 0 24 24" fill="none">
+        // [+] chip: загрузить фон
+        const plus = document.createElement("div");
+        plus.className = "chip";
+        plus.innerHTML = '<span class="chip-icon">+</span>';
+        row.appendChild(plus);
+
+        // палитра
+        const pal = document.createElement("div");
+        pal.className = "chip chip-palette";
+        pal.innerHTML = `<svg viewBox="0 0 24 24" fill="none">
         <circle cx="7" cy="7" r="2.6" fill="#a88cf0"/><circle cx="12" cy="7" r="2.6" fill="#ef7777"/>
         <circle cx="17" cy="7" r="2.6" fill="#f0a85a"/><circle cx="7" cy="12" r="2.6" fill="#42d2b0"/>
         <circle cx="12" cy="12" r="2.6" fill="#7ebbff"/><circle cx="17" cy="12" r="2.6" fill="#d97aa5"/>
         <circle cx="12" cy="17" r="2.6" fill="#51b458"/>
       </svg>`;
-      row.appendChild(pal);
+        row.appendChild(pal);
 
-      const presetWrap=document.createElement("div");
-      presetWrap.style.display="flex";
-      presetWrap.style.gap="12px";
-      row.appendChild(presetWrap);
+        const presetWrap = document.createElement("div");
+        presetWrap.style.display = "flex";
+        presetWrap.style.gap = "12px";
+        row.appendChild(presetWrap);
 
-      function renderPresets(){
-        presetWrap.innerHTML="";
-        GRADIENTS.forEach(gr=>{
-          const c=document.createElement("div");
-          c.className="color-circle"+(gr===selectedGradient&&!selectedImage?" active":"");
-          c.style.background=gr;
-          c.onclick=()=>{
-            selectedImage=null;
-            overlay.style.backgroundImage="";
-            overlay.style.background=gr;
-            selectedGradient=gr;
-            presetWrap.querySelectorAll(".color-circle").forEach(x=>x.classList.remove("active"));
-            c.classList.add("active");
-          };
-          presetWrap.appendChild(c);
-        });
-      }
-      renderPresets();
-
-      // file input для фона
-      const bgFile=document.createElement("input");
-      bgFile.type="file";
-      bgFile.accept="image/*";
-      bgFile.style.display="none";
-      overlay.appendChild(bgFile);
-
-      function openBgSheet(){
-        const shOverlay=document.createElement("div");
-        shOverlay.className="sheet-overlay";
-        const sh=document.createElement("div");
-        sh.className="sheet";
-        sh.innerHTML=`<div class="sheet-item" id="bgUpload">Загрузить изображение</div>`;
-        shOverlay.appendChild(sh);
-        document.body.appendChild(shOverlay);
-
-        shOverlay.onclick=e=>{
-          if(e.target===shOverlay) shOverlay.remove();
-        };
-        sh.querySelector("#bgUpload").onclick=()=>{
-          bgFile.click();
-          shOverlay.remove();
-        };
-      }
-
-      plus.onclick=openBgSheet;
-
-      bgFile.onchange=e=>{
-        const f=e.target.files[0];
-        if(!f) return;
-        const r=new FileReader();
-        r.onload=ev=>{
-          selectedImage=ev.target.result;
-          overlay.style.backgroundImage=`url(${selectedImage})`;
-          overlay.style.backgroundSize="cover";
-          overlay.style.backgroundPosition="center";
-          presetWrap.querySelectorAll(".color-circle").forEach(x=>x.classList.remove("active"));
-        };
-        r.readAsDataURL(f);
-      };
-
-      // inline-палитра (без доп. модалок)
-      let palettePanel=null;
-      pal.onclick=()=>{
-        if(palettePanel){
-          palettePanel.remove();
-          palettePanel=null;
-          return;
+        function renderPresets() {
+          presetWrap.innerHTML = "";
+          GRADIENTS.forEach((gr) => {
+            const c = document.createElement("div");
+            c.className =
+              "color-circle" +
+              (gr === selectedGradient && !selectedImage ? " active" : "");
+            c.style.background = gr;
+            c.onclick = () => {
+              selectedImage = null;
+              overlay.style.backgroundImage = "";
+              overlay.style.background = gr;
+              selectedGradient = gr;
+              presetWrap
+                .querySelectorAll(".color-circle")
+                .forEach((x) => x.classList.remove("active"));
+              c.classList.add("active");
+            };
+            presetWrap.appendChild(c);
+          });
         }
-        palettePanel=document.createElement("div");
-        palettePanel.className="palette-inline";
-        palettePanel.innerHTML=`
+        renderPresets();
+
+        // file input для фона
+        const bgFile = document.createElement("input");
+        bgFile.type = "file";
+        bgFile.accept = "image/*";
+        bgFile.style.display = "none";
+        overlay.appendChild(bgFile);
+
+        function openBgSheet() {
+          const shOverlay = document.createElement("div");
+          shOverlay.className = "sheet-overlay";
+          const sh = document.createElement("div");
+          sh.className = "sheet";
+          sh.innerHTML = `<div class="sheet-item" id="bgUpload">Загрузить изображение</div>`;
+          shOverlay.appendChild(sh);
+          document.body.appendChild(shOverlay);
+
+          shOverlay.onclick = (e) => {
+            if (e.target === shOverlay) shOverlay.remove();
+          };
+          sh.querySelector("#bgUpload").onclick = () => {
+            bgFile.click();
+            shOverlay.remove();
+          };
+        }
+
+        plus.onclick = openBgSheet;
+
+        bgFile.onchange = (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          const r = new FileReader();
+          r.onload = (ev) => {
+            selectedImage = ev.target.result;
+            overlay.style.backgroundImage = `url(${selectedImage})`;
+            overlay.style.backgroundSize = "cover";
+            overlay.style.backgroundPosition = "center";
+            presetWrap
+              .querySelectorAll(".color-circle")
+              .forEach((x) => x.classList.remove("active"));
+          };
+          r.readAsDataURL(f);
+        };
+
+        // inline-палитра
+        let palettePanel = null;
+        pal.onclick = () => {
+          if (palettePanel) {
+            palettePanel.remove();
+            palettePanel = null;
+            return;
+          }
+          palettePanel = document.createElement("div");
+          palettePanel.className = "palette-inline";
+          palettePanel.innerHTML = `
           <div class="palette-inline-row">
             <label>Цвет</label>
             <input type="color" id="palColor" value="#cbac67" style="border:none;background:transparent;width:40px;height:24px;">
@@ -2336,132 +2215,135 @@ onlywishes.html
             <span id="palAngleVal">135°</span>
           </div>
         `;
-        stack.insertBefore(palettePanel, stack.children[1]);
+          stack.insertBefore(palettePanel, stack.children[1]);
 
-        const palColor=palettePanel.querySelector("#palColor");
-        const palAngle=palettePanel.querySelector("#palAngle");
-        const palAngleVal=palettePanel.querySelector("#palAngleVal");
+          const palColor = palettePanel.querySelector("#palColor");
+          const palAngle = palettePanel.querySelector("#palAngle");
+          const palAngleVal = palettePanel.querySelector("#palAngleVal");
 
-        function updateFromPalette(){
-          const hex=palColor.value;
-          const {h,s,l}=hexToHsl(hex);
-          const start=hslToCss(h, Math.min(100, s+5), Math.max(0, l-5));
-          const end=hslToCss(h, Math.max(0, s-20), Math.min(100, l+18));
-          const ang=palAngle.value;
-          palAngleVal.textContent=ang+"°";
-          const gr=`linear-gradient(${ang}deg, ${start} 0%, ${end} 100%)`;
-          selectedImage=null;
-          selectedGradient=gr;
-          overlay.style.backgroundImage="";
-          overlay.style.background=gr;
-          renderPresets();
-        }
+          function updateFromPalette() {
+            const hex = palColor.value;
+            const { h, s, l } = hexToHsl(hex);
+            const start = hslToCss(h, Math.min(100, s + 5), Math.max(0, l - 5));
+            const end = hslToCss(h, Math.max(0, s - 20), Math.min(100, l + 18));
+            const ang = palAngle.value;
+            palAngleVal.textContent = ang + "°";
+            const gr = `linear-gradient(${ang}deg, ${start} 0%, ${end} 100%)`;
+            selectedImage = null;
+            selectedGradient = gr;
+            overlay.style.backgroundImage = "";
+            overlay.style.background = gr;
+            renderPresets();
+          }
 
-        palColor.oninput=updateFromPalette;
-        palAngle.oninput=updateFromPalette;
-        updateFromPalette();
-      };
+          palColor.oninput = updateFromPalette;
+          palAngle.oninput = updateFromPalette;
+          updateFromPalette();
+        };
 
-      // title
-      const input=document.createElement("input");
-      input.className="create-title-input";
-      input.placeholder="Название списка";
-      input.value=listObj?listObj.name||"":"";
-      stack.appendChild(input);
+        // title
+        const input = document.createElement("input");
+        input.className = "create-title-input";
+        input.placeholder = "Название списка";
+        input.value = listObj ? listObj.name || "" : "";
+        stack.appendChild(input);
 
-      // actions
-      const actions=document.createElement("div");
-      actions.className="create-actions-row";
-      actions.innerHTML=`
+        // actions
+        const actions = document.createElement("div");
+        actions.className = "create-actions-row";
+        actions.innerHTML = `
         <div class="create-icon-big" id="clClose">✕</div>
         <div class="create-icon-big" id="clSave">✓</div>`;
-      stack.appendChild(actions);
+        stack.appendChild(actions);
 
-      document.body.appendChild(overlay);
+        document.body.appendChild(overlay);
 
-      function saveList(){
-        const title=input.value.trim();
-        if(!title) return;
-        if(listObj){
-          listObj.name=title;
-          listObj.gradient=selectedImage?null:selectedGradient;
-          listObj.bgImage=selectedImage;
-          overlay.remove();
-          state.openedListId=listObj.id;
-          renderSection();
-        }else{
-          const id="l"+Math.random().toString(16).slice(2,7);
-          state.lists.unshift({
-            id,
-            name:title,
-            items:[],
-            gradient:selectedImage?null:selectedGradient,
-            bgImage:selectedImage
-          });
-          overlay.remove();
-          state.openedListId=id;
-          renderSection();
+        function saveList() {
+          const title = input.value.trim();
+          if (!title) return;
+          if (listObj) {
+            listObj.name = title;
+            listObj.gradient = selectedImage ? null : selectedGradient;
+            listObj.bgImage = selectedImage;
+            overlay.remove();
+            state.openedListId = listObj.id;
+            renderSection();
+          } else {
+            const id = "l" + Math.random().toString(16).slice(2, 7);
+            state.lists.unshift({
+              id,
+              name: title,
+              items: [],
+              gradient: selectedImage ? null : selectedGradient,
+              bgImage: selectedImage,
+              isPublic: true,
+            });
+            overlay.remove();
+            state.openedListId = id;
+            renderSection();
+          }
         }
+
+        actions.querySelector("#clClose").onclick = () => overlay.remove();
+        actions.querySelector("#clSave").onclick = saveList;
+        setTimeout(() => {
+          input.focus();
+          if (listObj) input.select();
+        }, 50);
       }
 
-      actions.querySelector("#clClose").onclick=()=>overlay.remove();
-      actions.querySelector("#clSave").onclick=saveList;
-      setTimeout(()=>{input.focus();if(listObj) input.select();},50);
-    }
+      /* Top "Создать список" */
+      document.getElementById("topAdd").onclick = () => openCreateListScreen();
 
-    /* Top "Создать список" */
-    document.getElementById("topAdd").onclick=()=>openCreateListScreen();
+      /* Context menu on cards (⋯) */
+      document.addEventListener("click", (e) => {
+        const moreBtn = e.target.closest(".wl-more");
 
-    /* Context menu on cards (⋯) */
-    document.addEventListener("click",(e)=>{
-      const old=document.querySelector(".more-menu");
-      if(old && !e.target.closest(".more-menu") && !e.target.closest(".wl-more")) old.remove();
+        if (moreBtn) {
+          const id = moreBtn.dataset.id;
+          const lst = state.lists.find((l) => l.id === id);
+          if (!lst) return;
 
-      const moreBtn=e.target.closest(".wl-more");
-      if(moreBtn){
-        const id=moreBtn.dataset.id;
-        const rect=moreBtn.getBoundingClientRect();
-        const menu=document.createElement("div");
-        menu.className="more-menu";
-        const top = rect.bottom + 6 + window.scrollY;
-        const left = rect.right - 210 + window.scrollX;
-        menu.style.top=top+"px";
-        menu.style.left=left+"px";
-        menu.innerHTML=`
-          <div class="more-item" data-act="share" data-id="${id}">Поделиться <span>⤴︎</span></div>
-          <div class="more-item" data-act="edit" data-id="${id}">Редактировать <span>✎</span></div>
-          <div class="more-item danger" data-act="delete" data-id="${id}">Удалить <span>🗑</span></div>
-        `;
-        document.body.appendChild(menu);
+          const overlay = openBottomSheet(`
+            <div class="bs-title">${lst.name}</div>
+            <div class="bs-item" data-act="share" data-id="${id}">Поделиться</div>
+            <div class="bs-item" data-act="edit" data-id="${id}">Редактировать</div>
+            <div class="bs-item danger" data-act="delete" data-id="${id}">Удалить</div>
+          `);
 
-        menu.onclick=(ev)=>{
-          const item=ev.target.closest(".more-item");
-          if(!item) return;
-          const act=item.dataset.act;
-          const lid=item.dataset.id;
-          const lst=state.lists.find(l=>l.id===lid);
-          if(!act || !lst) return;
+          overlay.querySelectorAll(".bs-item").forEach((item) =>
+            item.addEventListener("click", () => {
+              const act = item.dataset.act;
+              const lid = item.dataset.id;
+              const list = state.lists.find((l) => l.id === lid);
+              if (!act || !list) return;
 
-          if(act==="share"){
-            alert("Ссылка: https://t.me/your_bot?list="+lid);
-          }
-          if(act==="edit"){
-            openCreateListScreen(lst);
-          }
-          if(act==="delete"){
-            if(confirm("Удалить список?")){
-              state.lists=state.lists.filter(l=>l.id!==lid);
-              state.openedListId=null;
-              renderSection();
-            }
-          }
-          menu.remove();
-        };
-      }
-    });
+              if (act === "share") {
+                overlay.remove();
+                openShareMenu(lid);
+                return;
+              }
+              if (act === "edit") {
+                overlay.remove();
+                openCreateListScreen(list);
+                return;
+              }
+              if (act === "delete") {
+                if (confirm("Удалить список?")) {
+                  state.lists = state.lists.filter((l) => l.id !== lid);
+                  state.openedListId = null;
+                  overlay.remove();
+                  renderSection();
+                }
+              }
+            })
+          );
+          return;
+        }
+      });
 
-    renderTabs();
-    renderSection();
-  </script>
-</body>
+      renderTabs();
+      renderSection();
+    </script>
+  </body>
 </html>
