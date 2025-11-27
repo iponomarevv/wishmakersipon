@@ -1,0 +1,195 @@
+
+export type Language = 'ru' | 'en';
+
+export const translations = {
+  ru: {
+    app: {
+      createList: "Создать новый список",
+      defaultListName: "Мои желания",
+      friends: "Друзья",
+      inviteFriend: "Пригласить друга",
+      inviteText: "Присоединяйся к Wishmakers! https://wishmakers.app",
+      inviteCopied: "Ссылка-приглашение скопирована",
+      noLists: "У вас пока нет списков",
+      noFriendLists: "У вас пока нет списков от друзей",
+      deleteListConfirm: "Удалить список?",
+      hideListConfirm: "Скрыть этот список из ленты?",
+    },
+    card: {
+      wish_1: "желание",
+      wish_2_4: "желания",
+      wish_5_0: "желаний",
+      empty: "Пока нет желаний",
+      share: "Поделиться",
+      edit: "Редактировать",
+      delete: "Удалить",
+      hide: "Скрыть",
+    },
+    listView: {
+      addWishes: "Добавьте желания",
+      pressPlus: "Нажмите кнопку + внизу, чтобы начать",
+      noName: "Без названия",
+      hasLink: "Есть ссылка ↗",
+    },
+    wishEditor: {
+      newWish: "Новое желание",
+      editWish: "Редактирование желания",
+      link: "Ссылка",
+      linkPlaceholder: "https://...",
+      title: "Название",
+      titlePlaceholder: "Например: Airpods Pro",
+      desc: "Описание",
+      descPlaceholder: "Описание желания...",
+      price: "Цена",
+      image: "Изображение (URL)",
+      imagePlaceholder: "https://example.com/product.jpg",
+      saveAdd: "Добавить желание",
+      saveEdit: "Сохранить изменения",
+      delete: "Удалить желание",
+      alertNoTitle: "Добавьте название или ссылку",
+      alertPasteFail: "Не удалось вставить из буфера",
+      deleteConfirm: "Удалить желание?",
+    },
+    listEditor: {
+      titlePlaceholder: "Название списка",
+      colors: "Цвета",
+      angle: "Угол",
+    },
+    wishDetail: {
+      noDesc: "Нет описания",
+      share: "Поделиться",
+      booked: "Забронировать",
+      unbook: "Снять бронь",
+      bookedBy: "Забронировал(а):",
+      bookedAlert: "Отмечено как забронированное",
+      hide: "Скрыть",
+      hideAlert: "Желание скрыто",
+      delete: "Удалить",
+      confirmBookingTitle: "Забронировать желание?",
+      anonymousLabel: "Скрыть мое имя (анонимно)",
+      confirmButton: "Подтвердить",
+      cancelButton: "Отмена",
+      markAsBooked: "Отметить как забронированное",
+      markedByOwner: "Отмечено владельцем",
+      anonymous: "Аноним",
+    },
+    share: {
+      title: "Поделиться списком",
+      public: "Список публичный",
+      private: "Приватный список",
+      copy: "Копировать",
+      copied: "Ссылка скопирована",
+      hintPublic: "Любой, у кого есть ссылка, сможет увидеть этот список.",
+      friends: "Друзья",
+      friendsHint: "Выберите друга, чтобы отправить ему список в Telegram.",
+      send: "Отправить список",
+      sendTg: "Отправить",
+      shareText: "Посмотри мой вишлист:",
+      privateHint: "Список доступен только выбранным друзьям в приложении.",
+      selectFriend: "Выбрать друга",
+      privateShareHint: "Нажмите, чтобы выбрать друга в Telegram и отправить ему доступ.",
+    }
+  },
+  en: {
+    app: {
+      createList: "Create new list",
+      defaultListName: "My Wishes",
+      friends: "Friends",
+      inviteFriend: "Invite Friend",
+      inviteText: "Join Wishmakers! https://wishmakers.app",
+      inviteCopied: "Invite link copied",
+      noLists: "You have no lists yet",
+      noFriendLists: "No shared lists from friends yet",
+      deleteListConfirm: "Delete list?",
+      hideListConfirm: "Hide this list from feed?",
+    },
+    card: {
+      wish_1: "wish",
+      wish_2_4: "wishes",
+      wish_5_0: "wishes",
+      empty: "No wishes yet",
+      share: "Share",
+      edit: "Edit",
+      delete: "Delete",
+      hide: "Hide",
+    },
+    listView: {
+      addWishes: "Add wishes",
+      pressPlus: "Tap the + button below to start",
+      noName: "Untitled",
+      hasLink: "Has link ↗",
+    },
+    wishEditor: {
+      newWish: "New Wish",
+      editWish: "Edit Wish",
+      link: "Link",
+      linkPlaceholder: "https://...",
+      title: "Title",
+      titlePlaceholder: "E.g. Airpods Pro",
+      desc: "Description",
+      descPlaceholder: "Wish description...",
+      price: "Price",
+      image: "Image (URL)",
+      imagePlaceholder: "https://example.com/product.jpg",
+      saveAdd: "Add Wish",
+      saveEdit: "Save Changes",
+      delete: "Delete Wish",
+      alertNoTitle: "Please add a title or a link",
+      alertPasteFail: "Could not paste from clipboard",
+      deleteConfirm: "Delete wish?",
+    },
+    listEditor: {
+      titlePlaceholder: "List Name",
+      colors: "Colors",
+      angle: "Angle",
+    },
+    wishDetail: {
+      noDesc: "No description",
+      share: "Share",
+      booked: "Book",
+      unbook: "Unbook",
+      bookedBy: "Booked by:",
+      bookedAlert: "Marked as booked",
+      hide: "Hide",
+      hideAlert: "Wish hidden",
+      delete: "Delete",
+      confirmBookingTitle: "Book this wish?",
+      anonymousLabel: "Hide my name (Anonymous)",
+      confirmButton: "Confirm",
+      cancelButton: "Cancel",
+      markAsBooked: "Mark as booked",
+      markedByOwner: "Marked by owner",
+      anonymous: "Anonymous",
+    },
+    share: {
+      title: "Share List",
+      public: "Public List",
+      private: "Private List",
+      copy: "Copy",
+      copied: "Link copied",
+      hintPublic: "Anyone with the link can view this list.",
+      friends: "Friends",
+      friendsHint: "Select a friend to send the list via Telegram.",
+      send: "Send List",
+      sendTg: "Send",
+      shareText: "Check out my wishlist:",
+      privateHint: "Only selected friends can see this list in the app.",
+      selectFriend: "Select Friend",
+      privateShareHint: "Click to select a friend in Telegram and grant access.",
+    }
+  }
+};
+
+export const pluralizeWishes = (count: number, lang: Language) => {
+  if (lang === 'en') {
+    return count === 1 ? translations.en.card.wish_1 : translations.en.card.wish_2_4;
+  }
+  
+  // Russian declension
+  const m = Math.abs(count) % 100;
+  const n1 = m % 10;
+  if (m > 10 && m < 20) return translations.ru.card.wish_5_0;
+  if (n1 > 1 && n1 < 5) return translations.ru.card.wish_2_4;
+  if (n1 === 1) return translations.ru.card.wish_1;
+  return translations.ru.card.wish_5_0;
+};
