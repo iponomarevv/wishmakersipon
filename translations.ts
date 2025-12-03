@@ -5,6 +5,7 @@ export const translations = {
   ru: {
     app: {
       createList: "Создать новый список",
+      addWish: "Добавить желание",
       defaultListName: "Мои желания",
       friends: "Друзья",
       inviteFriend: "Пригласить друга",
@@ -93,6 +94,7 @@ export const translations = {
   en: {
     app: {
       createList: "Create new list",
+      addWish: "Add Wish",
       defaultListName: "My Wishes",
       friends: "Friends",
       inviteFriend: "Invite Friend",

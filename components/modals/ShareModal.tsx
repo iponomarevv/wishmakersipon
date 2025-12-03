@@ -13,6 +13,7 @@ interface ShareModalProps {
   onUpdateSharedWith: (friendIds: string[]) => void;
   onPreview: () => void;
   isReadOnly?: boolean;
+  onSaveBeforeShare?: () => Promise<boolean>;
 }
 
 const ShareModal: React.FC<ShareModalProps> = ({ 
@@ -23,32 +24,93 @@ const ShareModal: React.FC<ShareModalProps> = ({
   onTogglePublic,
   onUpdateSharedWith,
   onPreview,
-  isReadOnly
+  isReadOnly,
+  onSaveBeforeShare
 }) => {
-  const shareLink = `https://wishmakers.app/l/${list.id}`;
+  const isTelegram = Boolean(window.Telegram?.WebApp);
+  // Telegram deep link to open in mini app
+  const telegramAppLink = `https://t.me/Wishmakers_bot?startapp=share_${list.id}`;
+  // Fallback web link (for non-Telegram browsers)
+  const webLink = `https://wishmakers.ru/#/l/${list.id}`;
+  // Use Telegram link if in Telegram, otherwise web link
+  const shareLink = isTelegram ? telegramAppLink : webLink;
   const t = translations[lang].share;
   
   const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: list.name,
-          text: `${t.shareText} ${list.name}`,
-          url: shareLink,
-        });
-      } catch (err) {
-        console.error("Error sharing", err);
+    try {
+      // Try to save list to backend before sharing (but don't block if it fails)
+      if (onSaveBeforeShare) {
+        try {
+          const saved = await onSaveBeforeShare();
+          // Even if save failed, allow sharing to proceed
+          if (!saved) {
+            console.warn('Save failed, but allowing share to proceed');
+          }
+        } catch (saveError) {
+          console.error('Error saving before share:', saveError);
+          // Continue with sharing anyway
+        }
       }
-    } else {
-      navigator.clipboard.writeText(shareLink);
-      alert(t.copied);
+      
+      // If in Telegram, use Telegram sharing
+      if (isTelegram && window.Telegram?.WebApp?.openTelegramLink) {
+        const text = encodeURIComponent(`${t.shareText} ${list.name}`);
+        const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(telegramAppLink)}&text=${text}`;
+        try {
+          window.Telegram.WebApp.openTelegramLink(shareUrl);
+        } catch (telegramError) {
+          console.error('Error opening Telegram share:', telegramError);
+          // Fallback to clipboard
+          navigator.clipboard.writeText(shareLink);
+          alert(t.copied);
+        }
+        return;
+      }
+      
+      // Otherwise use native share or clipboard
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: list.name,
+            text: `${t.shareText} ${list.name}`,
+            url: shareLink, // Will use telegramAppLink if in Telegram
+          });
+        } catch (err: any) {
+          // User cancelled or error - fallback to clipboard
+          if (err.name !== 'AbortError') {
+            console.error("Error sharing", err);
+          }
+          navigator.clipboard.writeText(shareLink);
+          alert(t.copied);
+        }
+      } else {
+        navigator.clipboard.writeText(shareLink);
+        alert(t.copied);
+      }
+    } catch (error) {
+      console.error('Unexpected error in handleNativeShare:', error);
+      // Last resort - just copy to clipboard
+      try {
+        navigator.clipboard.writeText(shareLink);
+        alert(t.copied);
+      } catch (clipboardError) {
+        alert('Ошибка при шаринге. Попробуй скопировать ссылку вручную.');
+      }
     }
   };
 
-  const handleTelegramShare = () => {
-      const text = encodeURIComponent(`${t.shareText} ${list.name}\n${shareLink}`);
-      // Opens Telegram share picker
-      window.open(`https://t.me/share/url?url=${encodeURIComponent(shareLink)}&text=${text}`, '_blank');
+  const handleTelegramShare = async () => {
+      // Ensure list is saved to backend before sharing
+      // This will be handled by parent component's onUpdateSharedWith
+      
+      // Use Telegram app link to open in mini app
+      const text = encodeURIComponent(`${t.shareText} ${list.name}`);
+      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(telegramAppLink)}&text=${text}`;
+      if (window.Telegram?.WebApp?.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(shareUrl);
+      } else {
+          window.open(shareUrl, '_blank');
+      }
   };
 
   return (
@@ -80,66 +142,94 @@ const ShareModal: React.FC<ShareModalProps> = ({
           </div>
         </div>
 
-        {/* Public/Private Toggle - Hidden for Friends (Read Only) */}
-        {!isReadOnly && (
-            <div className="bg-white/5 rounded-[16px] p-4 mb-4">
-            <div className="flex items-center justify-between gap-2.5 mb-2">
-                <div className="font-medium text-[15px]">{list.isPublic ? t.public : t.private}</div>
-                <div
-                className={`w-[52px] h-[30px] rounded-full relative cursor-pointer transition-colors border border-white/10 ${list.isPublic ? 'bg-[#22c55e]' : 'bg-white/10'}`}
-                onClick={() => onTogglePublic(!list.isPublic)}
-                >
-                <div className={`absolute top-[2px] left-[2px] w-[24px] h-[24px] rounded-full bg-white transition-transform shadow-sm ${list.isPublic ? 'translate-x-[22px]' : ''}`} />
+        {/* Simplified: All lists are public - just share link */}
+        <div className="space-y-4">
+            <div className="flex items-center gap-2 bg-white/5 p-3 rounded-[14px] border border-white/10">
+                <div className="flex-1 text-[13px] text-white/60 truncate" title={shareLink}>
+                    {isTelegram ? telegramAppLink : webLink}
                 </div>
-            </div>
-            
-            <div className="text-[13px] text-white/60 mt-1 leading-relaxed">
-                {list.isPublic ? t.hintPublic : t.privateHint}
-            </div>
-            </div>
-        )}
-
-        {/* --- PUBLIC MODE --- */}
-        {list.isPublic && (
-            <div className="animate-fade-in space-y-4">
-                 <div className="flex items-center gap-2 bg-white/5 p-3 rounded-[14px] border border-white/10">
-                    <div className="flex-1 text-[13px] text-white/60 truncate">{shareLink}</div>
-                    <button 
-                        onClick={() => {
-                            navigator.clipboard.writeText(shareLink);
-                            alert(t.copied);
-                        }}
-                        className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-medium transition-colors"
-                    >
-                        {t.copy}
-                    </button>
-                </div>
-
-                <button
-                    onClick={handleNativeShare}
-                    className="w-full h-[52px] bg-white text-black rounded-[16px] font-semibold text-[16px] flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors active:scale-[0.99]"
+                <button 
+                    onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        try {
+                            // Try to save list to backend before copying (but allow even if fails)
+                            if (onSaveBeforeShare) {
+                                try {
+                                    await onSaveBeforeShare(); // Don't block if fails
+                                } catch (saveError) {
+                                    console.warn('Save failed, but continuing with copy:', saveError);
+                                }
+                            }
+                            
+                            // Simple and reliable method: use input field
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = shareLink;
+                            input.readOnly = true;
+                            input.style.position = 'fixed';
+                            input.style.left = '-9999px';
+                            input.style.top = '0';
+                            input.style.opacity = '0';
+                            input.style.pointerEvents = 'none';
+                            
+                            document.body.appendChild(input);
+                            
+                            try {
+                                // Focus, select and copy
+                                input.focus();
+                                input.select();
+                                input.setSelectionRange(0, shareLink.length);
+                                
+                                // Try execCommand (works in most browsers including Telegram)
+                                const success = document.execCommand('copy');
+                                
+                                if (success) {
+                                    alert(t.copied);
+                                } else {
+                                    // If execCommand failed, try clipboard API
+                                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                                        try {
+                                            await navigator.clipboard.writeText(shareLink);
+                                            alert(t.copied);
+                                        } catch (clipError) {
+                                            // Both methods failed - show link for manual copy
+                                            alert('Скопируй ссылку:\n\n' + shareLink);
+                                        }
+                                    } else {
+                                        // No clipboard API - show link
+                                        alert('Скопируй ссылку:\n\n' + shareLink);
+                                    }
+                                }
+                            } catch (err) {
+                                console.error('Copy failed:', err);
+                                // Show link for manual copy
+                                alert('Скопируй ссылку:\n\n' + shareLink);
+                            } finally {
+                                if (document.body.contains(input)) {
+                                    document.body.removeChild(input);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Unexpected error:', error);
+                            alert('Скопируй ссылку:\n\n' + shareLink);
+                        }
+                    }}
+                    className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-medium transition-colors"
                 >
-                    <Share size={20} />
-                    {t.send}
+                    {t.copy}
                 </button>
             </div>
-        )}
 
-        {/* --- PRIVATE MODE --- */}
-        {!list.isPublic && (
-            <div className="animate-fade-in pt-2">
-                <button
-                    onClick={handleTelegramShare}
-                    className="w-full h-[52px] bg-white text-black rounded-[16px] font-semibold text-[16px] flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors active:scale-[0.99]"
-                >
-                    <Send size={20} />
-                    {t.selectFriend}
-                </button>
-                <div className="text-[13px] text-white/40 mt-3 text-center px-4">
-                    {t.privateShareHint}
-                </div>
-            </div>
-        )}
+            <button
+                onClick={handleNativeShare}
+                className="w-full h-[52px] bg-white text-black rounded-[16px] font-semibold text-[16px] flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors active:scale-[0.99]"
+            >
+                <Share size={20} />
+                {t.send}
+            </button>
+        </div>
 
       </div>
     </div>

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { WishList } from '../types';
-import { Gift, Share2, MoveLeft, Star } from 'lucide-react';
+import { Gift, Share2, MoveLeft, Star, X } from 'lucide-react';
 import { Language, translations } from '../translations';
 import { DefaultGiftIcon } from './DefaultGiftIcon';
 
@@ -69,7 +69,7 @@ const ListView: React.FC<ListViewProps> = ({
             onClick={onClose}
             className="w-[40px] h-[40px] rounded-full bg-black/50 border-none grid place-items-center text-white cursor-pointer backdrop-blur-md transition-opacity hover:bg-black/60"
         >
-            <MoveLeft size={24} />
+            {isReadOnly ? <X size={24} /> : <MoveLeft size={24} />}
         </button>
         
         <button
